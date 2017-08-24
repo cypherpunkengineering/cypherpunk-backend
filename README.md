@@ -11,7 +11,7 @@ NPM dependencies:
  - good (Logging)
  - good-console (Log to console)
  - good-squeeze (Log aggregator)
- - good-fiel (Log to file)
+ - good-file (Log to file)
  - boom (Error HTTP Responses for hapi)
  - inert (Static file serving for hapi)
  - joi (Input validation plugin for hapi)
