@@ -1,9 +1,11 @@
-This is still a work in progress.
+## Dependencies
 
-Current dependencies:
+System dependencies:
 postgres
 redis
-node
+node (via nvm)
+PM2 (via npm install -g pm2)
+knex (via npm install -g knex)
 
 NPM dependencies:
  - hapi (Server Framework)
@@ -21,10 +23,24 @@ NPM dependencies:
  - bcrypt
  - catbox-redis (Redis connector)
 
-Main file: server.js - run with PM2 for production
+
+## Configuration
+
+Configuration Files:
+Things to set on prod:
+- config/auth.js
+- config/database.js
+
+
+## Installation
+* `npm install` to install node dependencies
+* `knex migration:latest` to run all DB migrations
+
+
+## Running
+
 Set port on PORT env var or will default to 9000
 Set host on HOST env var or will default to 'localhost'
-
-Things to set on prod:
- - config/auth.js
- - config/database.js
+Main file: server.js
+  - run with PM2 for production
+  - run with nodemon for dev
