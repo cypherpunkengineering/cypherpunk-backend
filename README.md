@@ -19,6 +19,7 @@ NPM dependencies:
  - bookself (Database ORM)
  - pg (Postgres Connector)
  - bcrypt
+ - catbox-redis (Redis connector)
 
 Main file: server.js - run with PM2 for production
 Set port on PORT env var or will default to 9000
