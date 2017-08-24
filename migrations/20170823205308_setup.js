@@ -5,6 +5,7 @@ exports.up = function(knex, Promise) {
       table.uuid('id').defaultTo(knex.raw('uuid_generate_v4()')).primary();
       table.string('email').unique().notNullable();
       table.string('password');
+      table.string('type');
       table.timestamps(true);
       table.boolean('confirmed');
       table.string('confirmationToken');
