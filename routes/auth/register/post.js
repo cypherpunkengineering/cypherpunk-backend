@@ -24,8 +24,15 @@ module.exports = {
       confirmed: false
     };
 
+    // TODO: priority based on ip location
+    // TODO: create radius entry
+    // TODO: create default stripe subscription customer object
+    // TODO: allow creating account without password
+    // TODO: create confirmation token
+
+
     // save to db
-    let promise = request.models.User.forge(user).save()
+    let promise = request.db.insert(user).into('users').returning('*')
     .then((user) => {
       return new Promise((resolve, reject) => {
         // set session? cookie? I forget.

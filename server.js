@@ -12,7 +12,6 @@ const Auth = require('hapi-auth-cookie');
 // local modules
 const db = require('./database');
 const routes = require('./routes');
-const models = require('./models');
 const authOptions = require('./configs/auth');
 const logOptions = require('./configs/logging');
 
@@ -31,8 +30,6 @@ server.register(Inert)
 .then(() => { return server.register({ register: Good, options: logOptions }); })
 // db decoration
 .then(() => { return server.decorate('request', 'db', db); })
-// models decoration
-.then(() => { return server.decorate('request', 'models', models); })
 // session caching (30 days)
 // TODO: double check cache expiresIn - use redis instead to persist session forever
 .then(() => { server.app.cache = server.cache({ segment: 'sessions', expiresIn: 2147483647 }); })
@@ -47,17 +44,8 @@ server.register(Inert)
 // catch all error handling
 .catch((err) => { throw err; });
 
-// models.User.forge({
-//   email: 'ed@cypherpunk.com'
-// })
-// .save()
-// .then((data) => {
-//   console.log(data);
-//   console.log(data.get('email'));
-// })
-// .then(() => {
-//   return models.User.fetchAll();
-// })
+
+// db.select().from('users').first()
 // .then((data) => {
 //   console.log(data);
 // });

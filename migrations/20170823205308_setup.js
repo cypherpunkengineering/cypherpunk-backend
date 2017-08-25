@@ -6,7 +6,8 @@ exports.up = function(knex, Promise) {
       table.string('email').unique().notNullable();
       table.string('password');
       table.string('type');
-      table.timestamps(true);
+      table.integer('priority');
+      table.timestamps(true, true);
       table.boolean('confirmed');
       table.string('confirmationToken');
       table.string('recoveryToken');

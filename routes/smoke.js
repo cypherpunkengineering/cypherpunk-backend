@@ -11,7 +11,7 @@ module.exports = {
     }
   },
   handler: (request, reply) => {
-    request.models.User.fetchAll()
+    request.db.select().from('users')
     .then((users) => {
       return reply('test passed');
     });

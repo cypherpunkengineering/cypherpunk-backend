@@ -10,7 +10,6 @@
   "license": "ISC",
   "dependencies": {
     "bcrypt": "^1.0.3",
-    "bookshelf": "^0.10.4",
     "boom": "^5.2.0",
     "catbox-redis": "^3.0.2",
     "good": "^7.3.0",

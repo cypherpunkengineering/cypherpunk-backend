@@ -18,7 +18,6 @@ NPM dependencies:
  - inert (Static file serving for hapi)
  - joi (Input validation plugin for hapi)
  - knex (Database Query Engine)
- - bookself (Database ORM)
  - pg (Postgres Connector)
  - bcrypt
  - catbox-redis (Redis connector)
@@ -29,7 +28,8 @@ NPM dependencies:
 Configuration Files:
 Things to set on prod:
 - config/auth.js
-- config/database.js
+- config/logging.js
+- knexfile.js (postgres connection config) //TODO: how to set to prod?
 
 
 ## Installation
