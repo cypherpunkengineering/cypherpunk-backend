@@ -19,7 +19,7 @@ module.exports = {
 
     // create user to save to db with confirmed = false
     let user = {
-      email: request.payload.email,
+      email: request.payload.email.toLowerCase(),
       password: bcrypt.hashSync(request.payload.password, 15),
       confirmed: false
     };

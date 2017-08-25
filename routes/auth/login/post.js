@@ -17,7 +17,7 @@ module.exports = {
   handler: (request, reply) => {
     if (request.auth.isAuthenticated) { return reply.redirect('/'); }
 
-    let email = request.payload.email;
+    let email = request.payload.email.toLowerCase();
     let password = request.payload.password;
     let promise = request.db.select().from('users').where({ email: email }).first()
     .then((user) => {
