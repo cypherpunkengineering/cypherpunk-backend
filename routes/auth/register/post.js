@@ -1,10 +1,11 @@
 const Joi = require('joi');
 const Boom = require('boom');
 const bcrypt = require('bcrypt');
+const randToken = require('rand-token');
 
 module.exports = {
   method: 'POST',
-  path: '/register',
+  path: '/api/v1/account/register/signup',
   config: {
     auth: { strategy: 'session', mode: 'try' },
     validate: {
@@ -15,24 +16,36 @@ module.exports = {
     }
   },
   handler: (request, reply) => {
+    console.log('here');
     if (request.auth.isAuthenticated) { return reply.redirect('/'); }
 
-    // create user to save to db with confirmed = false
-    let user = {
+    // check if email already exists
+
+    // create user
+    let promise = request.db.insert({
       email: request.payload.email.toLowerCase(),
       password: bcrypt.hashSync(request.payload.password, 15),
-      confirmed: false
-    };
-
-    // TODO: priority based on ip location
-    // TODO: create radius entry
+      secret: randToken.generate(32),
+      type: 'free',
+      priority: 1,
+      confirmed: false,
+      confirmation_token: randToken.generate(32),
+      privacy_username: randToken.generate(32),
+      privacy_password: randToken.generate(32)
+    })
+    .into('users')
+    .returning('*')
+    // create stripe
     // TODO: create default stripe subscription customer object
-    // TODO: allow creating account without password
-    // TODO: create confirmation token
-
-
-    // save to db
-    let promise = request.db.insert(user).into('users').returning('*')
+    // create subscription
+    .then((user) => {
+      user = user[0];
+      return request.db.insert({ user_id: user.id, current: true })
+      .into('subscriptions')
+      .returning('*')
+      .then(() => { return user; });
+    })
+    // create session and cookie for user
     .then((user) => {
       return new Promise((resolve, reject) => {
         // set session? cookie? I forget.
@@ -43,6 +56,10 @@ module.exports = {
         });
       });
     })
+    // TODO: update radius
+    // TODO: send welcome email
+    // TODO: notify slack
+    // TODO: update count
     .catch((err) => {
       console.log(err);
       return Boom.badImplementation();

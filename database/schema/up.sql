@@ -1,5 +1,28 @@
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
+-- User
+CREATE TABLE users (
+  id uuid NOT NULL DEFAULT uuid_generate_v4() PRIMARY KEY,
+  email character varying(255) UNIQUE NOT NULL,
+  password character varying(255),
+  secret character varying(255) UNIQUE,
+  -- pending, invitation, expired, free, premium, elite, staff, developer
+  type character varying(255) NOT NULL,
+  priority integer NOT NULL, -- 1, 2, 3
+  confirmed boolean NOT NULL,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  updated_at timestamp with time zone NOT NULL DEFAULT now(),
+  last_login timestamp with time zone NOT NULL DEFAULT now(),
+  confirmation_token character varying(255),
+  recovery_token character varying(255),
+  pending_email character varying(255) UNIQUE,
+  pending_email_confirmation_token character varying(255),
+  referral_id character varying(255),
+  referral_name character varying(255),
+  privacy_username character varying(255) NOT NULL,
+  privacy_password character varying(255) NOT NULL
+);
+
 -- Subscription
 -- - SubscriptionPlan (asciiNoSpace string id of payment gateway defined plan)
 -- - SubscriptionProviderID (asciiNoSpace string id of payment gateway: stripe etc.)
@@ -14,49 +37,22 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 CREATE TABLE subscriptions (
   id uuid NOT NULL DEFAULT uuid_generate_v4() PRIMARY KEY,
-  type character varying (255), -- monthly, semiannually, annually
-  planId character varying (255), -- monthly899, etc
-  provider character varying (255), -- stripe, amazon, paypal, bitpay, android, ios
-  providerId character varying (255), -- stripe id, amazon id, paypal id, bitpay id
+  user_id uuid REFERENCES users (id) NOT NULL,
+  type character varying(255), -- monthly, semiannually, annually
+  plan_id character varying(255), -- monthly899, etc
+  provider character varying(255), -- stripe, amazon, paypal, bitpay, android, ios
+  provider_id character varying(255), -- stripe id, amazon id, paypal id, bitpay id
   active boolean DEFAULT false NOT NULL,
-  created_at timestamp with time zone NOT NULL,
-  updated_at timestamp with time zone NOT NULL,
-  startTimestamp timestamp with time zone,
-  purchaseTimestamp timestamp with time zone,
-  renewalTimestamp timestamp with time zone,
-  expirationTimestamp timestamp with time zone,
-  cancellationTimestamp timestamp with time zone,
-  currentPeriodStartTimestamp timestamp with time zone,
-  currentPeriodEndTimestamp timestamp with time zone
-);
-
--- User
--- - SubscriptionCurrentID (active subscription ID)
--- - SubscriptionPreviousID (array of old subscription IDs) // to do
-
--- - StripeCustomerID (id of customer from stripe API)
--- - StripePaymentSources[] (array of cards to pay with) // to do
-
-CREATE TABLE users (
-  id uuid NOT NULL DEFAULT uuid_generate_v4() PRIMARY KEY,
-  email character varying(255) UNIQUE NOT NULL,
-  password character varying(255),
-  type character varying(255), -- invitation, free, premium, developer, staff, administrator?
-  priority integer, -- 1, 2, 3
-  confirmed boolean,
+  current boolean DEFAULT false NOT NULL,
   created_at timestamp with time zone NOT NULL DEFAULT now(),
   updated_at timestamp with time zone NOT NULL DEFAULT now(),
-  last_login timestamp with time zone NOT NULL DEFAULT now(),
-  confirmationToken character varying (255),
-  recoveryToken character varying (255),
-  pendingEmail character varying (255) UNIQUE,
-  pendingEmailConfirmationToken character varying (255),
-  referralId character varying (255),
-  referralName character varying (255),
-  privacy_username character varying (255),
-  privacy_password character varying (255),
-  currentSubscriptionId uuid REFERENCES subscriptions (id),
-  previousSubscriptionId uuid REFERENCES subscriptions (id)
+  start_timestamp timestamp with time zone,
+  purchase_timestamp timestamp with time zone,
+  renewal_timestamp timestamp with time zone,
+  expiration_timestamp timestamp with time zone,
+  cancellation_timestamp timestamp with time zone,
+  currentPeriodStart_timestamp timestamp with time zone,
+  currentPeriodEnd_timestamp timestamp with time zone
 );
 
 CREATE TABLE stripe (
@@ -68,28 +64,28 @@ CREATE TABLE stripe (
 CREATE TABLE stripe_sources (
   id uuid NOT NULL DEFAULT uuid_generate_v4() PRIMARY KEY,
   user_id uuid REFERENCES users (id) NOT NULL,
-  card_id character varying (255) NOT NULL,
-  last4 character varying (4) NOT NULL,
-  exp_month character varying (15) NOT NULL, -- I just guessed here
-  exp_year character varying (15) NOT NULL, -- I just guessed here too
-  brand character varying (100) NOT NULL -- more guessing
+  card_id character varying(255) NOT NULL,
+  last4 character varying(4) NOT NULL,
+  exp_month character varying(15) NOT NULL, -- I just guessed here
+  exp_year character varying(15) NOT NULL, -- I just guessed here too
+  brand character varying(100) NOT NULL -- more guessing
 );
 
 CREATE TABLE amazon (
   id uuid NOT NULL DEFAULT uuid_generate_v4() PRIMARY KEY,
-  billing_agreement_id character varying (255) NOT NULL,
+  billing_agreement_id character varying(255) NOT NULL,
   amazon_data json
 );
 
 CREATE TABLE paypal (
   id uuid NOT NULL DEFAULT uuid_generate_v4() PRIMARY KEY,
-  paypal_ident character varying (255) NOT NULL,
+  paypal_ident character varying(255) NOT NULL,
   paypal_data json
 );
 
 CREATE TABLE bitpay (
   id uuid NOT NULL DEFAULT uuid_generate_v4() PRIMARY KEY,
-  bitpay_ident character varying (255) NOT NULL,
+  bitpay_ident character varying(255) NOT NULL,
   bitpay_data json
 );
 
