@@ -9,6 +9,7 @@
   "author": "Edward Kim",
   "license": "ISC",
   "dependencies": {
+    "@slack/client": "^3.12.0",
     "bcrypt": "^1.0.3",
     "boom": "^5.2.0",
     "catbox-redis": "^3.0.2",

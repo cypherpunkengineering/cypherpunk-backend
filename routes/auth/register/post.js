@@ -16,7 +16,6 @@ module.exports = {
     }
   },
   handler: (request, reply) => {
-    console.log('here');
     if (request.auth.isAuthenticated) { return reply.redirect('/'); }
 
     // check if email already exists
@@ -54,11 +53,16 @@ module.exports = {
           request.cookieAuth.set({ sid: 'user:' + user.id });
           return resolve();
         });
-      });
+      })
+      .then(() => { return user; });
     })
     // TODO: update radius
     // TODO: send welcome email
-    // TODO: notify slack
+    // notify slack
+    .then((user) => {
+      let text = `[SIGNUP] ${user.email} has signed up for an account :highfive:`;
+      request.slack.billing(text);
+    })
     // TODO: update count
     .catch((err) => {
       console.log(err);

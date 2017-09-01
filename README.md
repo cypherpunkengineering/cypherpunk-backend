@@ -21,6 +21,8 @@ NPM dependencies:
  - pg (Postgres Connector)
  - bcrypt
  - catbox-redis (Redis connector)
+ - rand-token (random token generator)
+ - @slack/client (slack sdk/api)
 
 
 ## Configuration
@@ -29,6 +31,7 @@ Configuration Files:
 Things to set on prod:
 - config/auth.js
 - config/logging.js
+- config/general.js (general server configurations)
 - knexfile.js (postgres connection config) //TODO: how to set to prod?
 
 

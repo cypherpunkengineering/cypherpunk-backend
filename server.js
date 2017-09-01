@@ -15,6 +15,9 @@ const routes = require('./routes');
 const authOptions = require('./configs/auth');
 const logOptions = require('./configs/logging');
 
+// plugins
+const slack = require('./plugins/slack');
+
 // bootstrap server with redis as a cache
 const server = new Hapi.Server({ cache: [{
   engine: Redis,
@@ -28,6 +31,8 @@ server.connection({ port: PORT, host: HOST, routes: { files } });
 server.register(Inert)
 // logging
 .then(() => { return server.register({ register: Good, options: logOptions }); })
+// slack integration
+.then(() => { return server.decorate('request', 'slack', slack); })
 // db decoration
 .then(() => { return server.decorate('request', 'db', db); })
 // session caching (30 days)
