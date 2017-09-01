@@ -3,7 +3,7 @@ const Boom = require('boom');
 
 module.exports = {
   method: 'GET',
-  path: '/logout',
+  path: '/account/logout',
   config: {
     auth: { strategy: 'session', mode: 'try' }
   },
