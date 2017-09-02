@@ -42,10 +42,21 @@ Things to set on prod:
 * `npm install` to install node dependencies
 * run `./database/schema/up.sql` file in postgres
 
+
 ## Running
 
+Set env on NODE_ENV env var or will default to 'DEV'
 Set port on PORT env var or will default to 9000
 Set host on HOST env var or will default to 'localhost'
 Main file: server.js
   - run with PM2 for production
   - run with nodemon for dev
+
+
+TODO:
+ - console log to log file
+ - radius integration on registration route
+ - mysql integration
+ - mongo integration
+
+ -- billing system
