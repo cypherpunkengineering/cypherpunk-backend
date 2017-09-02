@@ -60,11 +60,10 @@ module.exports = {
       let text = `[SIGNUP] ${user.email} has signed up for an account :highfive:`;
       request.slack.billing(text);
     })
-    // TODO: update count
-    .catch((err) => {
-      console.log(err);
-      return Boom.badImplementation();
-    });
+    // update count
+    .then(() => { return updateRegisteredCount(request); })
+    // print count to slack
+    .catch((err) => { return Boom.badImplementation(err); });
     return reply(promise);
   }
 }
@@ -77,4 +76,8 @@ function checkEmail(request, reply) {
     else { return; }
   });
   return reply(promise);
+}
+
+function updateRegisteredCount(request) {
+  return request.db('user_counters').where({ type: 'registered' }).increment('count');
 }

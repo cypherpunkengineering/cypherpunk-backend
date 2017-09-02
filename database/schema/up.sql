@@ -23,6 +23,17 @@ CREATE TABLE users (
   privacy_password character varying(255) NOT NULL
 );
 
+
+-- user counters
+
+CREATE TABLE user_counters (
+  type character varying(255) NOT NULL, -- registered, confirmed
+  count integer NOT NULL
+);
+INSERT INTO user_counters (type, count) VALUES ('registered', 0);
+INSERT INTO user_counters (type, count) VALUES ('confirmed', 0);
+
+
 -- Subscription
 -- - SubscriptionPlan (asciiNoSpace string id of payment gateway defined plan)
 -- - SubscriptionProviderID (asciiNoSpace string id of payment gateway: stripe etc.)
@@ -55,11 +66,13 @@ CREATE TABLE subscriptions (
   currentPeriodEnd_timestamp timestamp with time zone
 );
 
+
 CREATE TABLE stripe (
   id uuid NOT NULL DEFAULT uuid_generate_v4() PRIMARY KEY,
   customer_id character varying (255) NOT NULL,
   stripe_data json
 );
+
 
 CREATE TABLE stripe_sources (
   id uuid NOT NULL DEFAULT uuid_generate_v4() PRIMARY KEY,
@@ -71,17 +84,20 @@ CREATE TABLE stripe_sources (
   brand character varying(100) NOT NULL -- more guessing
 );
 
+
 CREATE TABLE amazon (
   id uuid NOT NULL DEFAULT uuid_generate_v4() PRIMARY KEY,
   billing_agreement_id character varying(255) NOT NULL,
   amazon_data json
 );
 
+
 CREATE TABLE paypal (
   id uuid NOT NULL DEFAULT uuid_generate_v4() PRIMARY KEY,
   paypal_ident character varying(255) NOT NULL,
   paypal_data json
 );
+
 
 CREATE TABLE bitpay (
   id uuid NOT NULL DEFAULT uuid_generate_v4() PRIMARY KEY,
