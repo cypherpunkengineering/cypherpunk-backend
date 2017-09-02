@@ -63,6 +63,7 @@ module.exports = {
     // update count
     .then(() => { return updateRegisteredCount(request); })
     // print count to slack
+    .then(() => { return request.slack.count(); })
     .catch((err) => { return Boom.badImplementation(err); });
     return reply(promise);
   }
