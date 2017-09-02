@@ -43,7 +43,8 @@ module.exports = {
     .then(() => {
       return new Promise((resolve, reject) => {
         // set session? cookie? I forget.
-        request.server.app.cache.set('user:' + user.id, { account: user }, 0, (err) => {
+        let cachedUser = { id: user.id, email: user.email };
+        request.server.app.cache.set('user:' + user.id, cachedUser, 0, (err) => {
           if (err) { return reject(err); }
           request.cookieAuth.set({ sid: 'user:' + user.id });
           return resolve();

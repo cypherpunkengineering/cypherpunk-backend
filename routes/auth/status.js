@@ -6,7 +6,7 @@ module.exports = {
   path: '/api/v1/account/status',
   config: { auth: { mode: 'required' } },
   handler: (request, reply) => {
-    let userId = request.auth.credentials.account.id;
+    let userId = request.auth.credentials.id;
     let user = {};
     let sub = {};
 
