@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <style type="text/css">
+    * { font-family: Arial; }
+    body, span, p { font-size: 12px; }
+    h3, h4 { margin-top: 2em; }
+    section { position: relative; width: 220px; float: left; }
+    input, select { width: 16em; }
+    input[type=text] { padding-left: 0.5em; }
+    pre { font-family: Courier New, Courier, monospace; font-size: 12px; padding: 8px 14px; background: #f4f4f4; border-radius: 5px; width: auto; border: 1px solid #eee; color: #444; overflow: auto; max-height: 400px; }
+    pre:empty::before { content: '...'; color: #888; }
+    table { font-size: 12px; }
+    th { text-align: left; }
+    th, td { padding: 0.1em 0.5em; }
+    label { width: 10em; font-size: 12px; display: inline-block; text-align: right; margin-right: 0.5em; }
+    button { margin: 1em 1em 0 0; min-width: 6em; font-size: 12px; padding: 8px 16px; background-color: #48c; color: #fff; border: none; border-radius: 0.5em; cursor: pointer; }
+    button:hover { background-color: #59d; }
+    #paypal-button-container { display: none }
+  </style>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+  <script>
+    $.getJSON = function(url, data, success, dataType = 'json') {
+      return $.ajax({ type: 'GET', url, data, success, dataType });
+    }
+    $.postJSON = function(url, data, success, dataType = 'json') {
+      return $.ajax({ type: 'POST', url, contentType: 'application/json', data: JSON.stringify(data), success, dataType });
+    };
+  </script>
+  <script id="stripe-v3" onload="stripeLoaded()" src="https://js.stripe.com/v3/"></script>
+  <title>Billing</title>
+</head>
+<body>
+    <h1>Payment Test</h1>
+
+    <h3>Account Information</h3>
+    <pre id="account-information"></pre>
+
+    <h3>Current Subscription</h3>
+    <label>Type:</label><span id="subscription-type"></span><br>
+    <label>Plan:</label><span id="subscription-plan"></span><br>
+    <label>Valid until:</label><span id="subscription-expiration"></span><br>
+    <label>Payment method:</label><span id="subscription-payment"></span><br>
+
+    <h3>Billing History</h3>
+    <table id="billing-history"></table>
+
+    <h3>Upgrade / Change Plan</h3>
+    <label for="plan">Plan:</label><select id="plan">
+      <option value="1m1195">1 Month ($11.95)</option>
+      <option value="12m6900">12 Months ($69.00)</option>
+      <option value="6m4200">6 Months ($42.00)</option>
+    </select>
+
+    <br style="clear: both">
+
+    <section>
+      <h4>Stripe</h4>
+      <input type="text" id="stripe-name" placeholder="Name on card" value="John Smith"><br>
+      <input type="text" id="stripe-card" placeholder="Card number" value="4242424242424242"><br>
+      <select id="stripe-exp-month" style="width: 5em">
+        <option value="" disabled>MM</option>
+        <option value="01">01</option>
+        <option value="02">02</option>
+        <option value="03">03</option>
+        <option value="04">04</option>
+        <option value="05">05</option>
+        <option value="06" selected>06</option>
+        <option value="07">07</option>
+        <option value="08">08</option>
+        <option value="09">09</option>
+        <option value="10">10</option>
+        <option value="11">11</option>
+        <option value="12">12</option>
+      </select>
+      <select id="stripe-exp-year" style="width: 6em">
+        <option value="" disabled>YYYY</option>
+        <option value="2017">2017</option>
+        <option value="2018">2018</option>
+        <option value="2019" selected>2019</option>
+        <option value="2020">2020</option>
+        <option value="2021">2021</option>
+        <option value="2022">2022</option>
+        <option value="2023">2023</option>
+        <option value="2024">2024</option>
+        <option value="2025">2025</option>
+        <option value="2026">2026</option>
+      </select>
+      <input type="text" id="stripe-cvc" style="width: 4em; position: absolute; left: 12em" placeholder="CVC" value="123"><br>
+      <select id="stripe-country">
+        <option value="US">United States</option>
+        <option value="JP">Japan</option>
+      </select><br>
+      <input type="text" id="stripe-zip" placeholder="Zip code" value="90210"><br>
+      <button onclick="stripeSubscribe()">Subscribe with Stripe</button>
+      <form id="stripe-form" action='/api/stripe/signup' style="display: none"><input type="hidden" name="token" value=""></form>
+    </section>
+
+    <section>
+      <h4>PayPal</h4>
+      <div>You will sign up for a new subscription, and will receive credit for any remaining current subscription time.</div>
+      <button onclick="paypalSubscribe()">Subscribe with PayPal</button><br>
+      <button onclick="paypalCancel()">Cancel PayPal</button>
+      <div id="paypal-button-container"></div>
+    </section>
+
+    <section>
+      <h4>None (Cancel)</h4>
+      <div>Cancel any future payments on any current subscription.</div>
+      <button onclick="cancel()">Cancel</button>
+    </section>
+
+    <br style="clear: both">
+
+    <script>
+
+      let account = {}, subscriptions = [];
+
+      //$.postJSON('/test', { test: 1, test2: [ 1, 2, 3 ] }).then(data => { $('#button-container').html(data.code); });
+      //$.post('/test', { test: 1, test2: [ 1, [ 2, 3 ], 4 ], test3: { a: 1, b: 2 } }).then(data => { $('#button-container').html(data.code); });
+      //$("#button-container").
+
+      function getExpirationDate() {
+        if (account.type === 'trial' || !account.expires) return null;
+        return new Date(account.expires);
+      }
+
+      function cancel() {
+        $.getJSON('/api/cancel').then(() => refreshAccountInfo());
+      }
+
+      function stripeLoaded() {
+        //Stripe.setPublishableKey('pk_test_V8lLSY93CP6w9SFgqCmw8FUg');
+        Stripe.setPublishableKey('pk_test_LMOP9XFaTkUkCiYNdyDcZTRa');
+      }
+
+      function stripeSubscribe() {
+        let plan = $('#plan').val();
+        Stripe.card.createToken({
+          number: $('#stripe-card').val(),
+          cvc: $('#stripe-cvc').val(),
+          exp_month: $('#stripe-exp-month').val(),
+          exp_year: $('#stripe-exp-year').val(),
+          name: $('#stripe-name').val(),
+          address_country: $('#stripe-country').val(),
+          address_zip: $('#stripe-zip').val(),
+        }, function (status, response) {
+          if (response.error) {
+            alert(response.error.message);
+          } else {
+            alert(JSON.stringify(response, 2));
+            $.postJSON('/api/stripe/signup', { token: response.id, plan: plan })
+            .then(() => refreshAccountInfo());
+          }
+        });
+      }
+
+      function paypalSubscribe() {
+        let plan = $('#plan').val();
+        let startDate = getExpirationDate();
+        let [ months, price ] = plan.split('m');
+        let name = "Cypherpunk Privacy " + { '1': "Monthly", '6': "Semiannual", '12': "Yearly" }[months] + " Plan";
+        price = price.slice(0, -2) + '.' + price.slice(-2);
+        $.postJSON('/api/paypal/create', { plan: $('#plan').val(), period: months, price: price, name, email: account.email, delay: startDate ? ((startDate - new Date()) / 86400000).toFixed(0) : '' })
+        .then(data => {
+          $('#paypal-button-container').html(data.code).find('form').submit();
+        });
+      }
+      function paypalCancel() {
+        if (account.billing.current.backend !== 'paypal') { alert('not using paypal'); return; }
+        $.getJSON('/api/paypal/cancel', { id: account.billing.current.data.subscription }).then(() => refreshAccountInfo());
+      }
+
+      function setAccountInfo(info) {
+        account = info;
+        let active = account.billing.subscriptions.filter(s => s.active)[0] || {};
+        $('#subscription-type').text(account.type);
+        $('#subscription-plan').text(active.plan);
+        $('#subscription-expiration').text(account.expiration);
+        $('#subscription-payment').text(active.backend);
+        $('#billing-history').html(
+          '<tr><th>Date</th><th>Subscription</th><th>Type</th><th>Amount</th><th>Backend</th></tr>' +
+          account.billing.history.sort((a,b) => a.date < b.date ? 1 : a.date > b.date ? -1 : 0).map(h => {
+            return `<tr><td>${h.date.replace('T',' ').split('.')[0]}</td><td>${h.subscription || ''}</td><td>${h.type}</td><td>${h.amount || ''}</td><td>${h.backend}</td></tr>`;
+          }).join('')
+        );
+      }
+      function setSubscriptioninfo(info) {
+        subscriptions = info;
+      }
+      function refreshAccountInfo() {
+        Promise.all([
+          $.getJSON('/api/v2/account'),
+          $.getJSON('/api/v2/account/subscriptions'),
+        ])
+        .then(info => {
+          $('#account-information').text(JSON.stringify(info[0], null, 2));
+          setAccountInfo(info[0]);
+          $('#subscription-information').text(JSON.stringify(info[1], null, 2));
+          setSubscriptionInfo(info[1]);
+        }, console.error);
+      }
+      refreshAccountInfo();
+
+    </script>
+  </body>
+</html>
