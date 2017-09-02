@@ -4,7 +4,7 @@ const bcrypt = require('bcrypt');
 
 module.exports = {
   method: 'POST',
-  path: '/account/authenitcate/userpasswd',
+  path: '/api/v1/account/authenitcate/userpasswd',
   config: {
     auth: { strategy: 'session', mode: 'try' },
     validate: {

@@ -5,6 +5,6 @@ module.exports = {
   path: '/',
   config: { auth: false },
   handler: (request, reply) => {
-    return reply.file('./login.html');
+    return reply.file('./index.html');
   }
 }
