@@ -1,4 +1,4 @@
-const config = require('./config');
+const config = require('../../configs/sendgrid');
 const mailer = require('@sendgrid/mail');
 
 mailer.setApiKey(config.sendgrid.key);
@@ -42,10 +42,6 @@ function mail(arg) {
       'X-Mailer': 'CypherpunkPrivacyMail'
     }
   }
-
-  console.log('Emailing: ', msg);
-
-  return mailer.send(msg);
 
   if (valid.valid) { return mailer.send(msg); }
   else { return Promise.reject(valid.error); }

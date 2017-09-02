@@ -21,7 +21,7 @@ module.exports = {
     if (request.auth.isAuthenticated) { return reply.redirect('/'); }
 
     // create user
-    let promise = request.db.insert({
+    let user = {
       email: request.payload.email.toLowerCase(),
       password: bcrypt.hashSync(request.payload.password, 15),
       secret: randToken.generate(32),
@@ -31,18 +31,16 @@ module.exports = {
       confirmation_token: randToken.generate(32),
       privacy_username: randToken.generate(32),
       privacy_password: randToken.generate(32)
-    })
-    .into('users')
-    .returning('*')
+    };
+    let promise = request.db.insert(user).into('users').returning('*')
     // create subscription
-    .then((user) => {
-      user = user[0];
-      return request.db.insert({ user_id: user.id, current: true }).into('subscriptions')
-      .returning('*')
-      .then(() => { return user; });
+    .then((data) => {
+      user = data[0];
+      let subscription = { user_id: user.id, current: true };
+      return request.db.insert(subscription).into('subscriptions').returning('*');
     })
     // create session and cookie for user
-    .then((user) => {
+    .then(() => {
       return new Promise((resolve, reject) => {
         // set session? cookie? I forget.
         request.server.app.cache.set('user:' + user.id, { account: user }, 0, (err) => {
@@ -50,20 +48,23 @@ module.exports = {
           request.cookieAuth.set({ sid: 'user:' + user.id });
           return resolve();
         });
-      })
-      .then(() => { return user; });
+      });
     })
     // TODO: update radius
-    // TODO: send welcome email
-    // notify slack
-    .then((user) => {
+    // send welcome email
+    .then(() => {
+      let msg = { to: user.email, id: user.id, confirmationToken: user.confirmation_token };
+      request.mailer.registration(msg);
+    })
+    // notify slack of new signup
+    .then(() => {
       let text = `[SIGNUP] ${user.email} has signed up for an account :highfive:`;
       request.slack.billing(text);
     })
     // update count
-    .then(() => { return updateRegisteredCount(request); })
+    .then(() => { return updateRegisteredCount(request.db); })
     // print count to slack
-    .then(() => { return request.slack.count(); })
+    .then(() => { request.slack.count(); })
     .catch((err) => { return Boom.badImplementation(err); });
     return reply(promise);
   }
@@ -79,6 +80,6 @@ function checkEmail(request, reply) {
   return reply(promise);
 }
 
-function updateRegisteredCount(request) {
-  return request.db('user_counters').where({ type: 'registered' }).increment('count');
+function updateRegisteredCount(db) {
+  return db('user_counters').where({ type: 'registered' }).increment('count');
 }

@@ -19,10 +19,12 @@ NPM dependencies:
  - joi (Input validation plugin for hapi)
  - knex (Database Query Engine)
  - pg (Postgres Connector)
- - bcrypt
+ - mongodb (mongo *sigh*)
  - catbox-redis (Redis connector)
+ - bcrypt
  - rand-token (random token generator)
  - @slack/client (slack sdk/api)
+ - @sendgrid/mail (sendgrid mail api)
 
 
 ## Configuration
@@ -32,13 +34,13 @@ Things to set on prod:
 - config/auth.js
 - config/logging.js
 - config/general.js (general server configurations)
+- config/sendgrid.js (sendgrid -apikey- configurations)
 - knexfile.js (postgres connection config) //TODO: how to set to prod?
 
 
 ## Installation
 * `npm install` to install node dependencies
-* `knex migration:latest` to run all DB migrations
-
+* run `./database/schema/up.sql` file in postgres
 
 ## Running
 

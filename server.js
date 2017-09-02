@@ -1,5 +1,6 @@
-const PORT = process.env.PORT || 9000;
-const HOST = process.env.HOST || 'localhost';
+const config = require('./configs/general');
+const PORT = config.port;
+const HOST = config.host;
 
 // vendor modules
 const path = require('path');
@@ -17,6 +18,7 @@ const logOptions = require('./configs/logging');
 
 // plugins
 const slack = require('./plugins/slack');
+const mailer = require('./plugins/sendgrid');
 
 // bootstrap server with redis as a cache
 const server = new Hapi.Server({ cache: [{
@@ -33,6 +35,8 @@ server.register(Inert)
 .then(() => { return server.register({ register: Good, options: logOptions }); })
 // slack integration
 .then(() => { return server.decorate('request', 'slack', slack); })
+// sendgrid integration
+.then(() => { return server.decorate('request', 'mailer', mailer)})
 // db decoration
 .then(() => { return server.decorate('request', 'db', db); })
 // session caching (30 days)
