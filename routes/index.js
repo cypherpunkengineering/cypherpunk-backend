@@ -6,5 +6,6 @@ module.exports = [
   require('./auth/logout'),
   require('./auth/secret'),
   require('./auth/register/get'),
-  require('./auth/register/post')
+  require('./auth/register/post'),
+  require('./home')
 ]

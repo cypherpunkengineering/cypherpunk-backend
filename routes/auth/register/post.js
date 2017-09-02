@@ -13,12 +13,12 @@ module.exports = {
         email: Joi.string().email().required(),
         password: Joi.string().min(6).required()
       }
-    }
+    },
+    // check if email already exists before handler
+    pre: [ { method: checkEmail } ]
   },
   handler: (request, reply) => {
     if (request.auth.isAuthenticated) { return reply.redirect('/'); }
-
-    // check if email already exists
 
     // create user
     let promise = request.db.insert({
@@ -34,13 +34,10 @@ module.exports = {
     })
     .into('users')
     .returning('*')
-    // create stripe
-    // TODO: create default stripe subscription customer object
     // create subscription
     .then((user) => {
       user = user[0];
-      return request.db.insert({ user_id: user.id, current: true })
-      .into('subscriptions')
+      return request.db.insert({ user_id: user.id, current: true }).into('subscriptions')
       .returning('*')
       .then(() => { return user; });
     })
@@ -70,4 +67,14 @@ module.exports = {
     });
     return reply(promise);
   }
+}
+
+function checkEmail(request, reply) {
+  let email = request.payload.email.toLowerCase();
+  let promise = request.db.select('id').from('users').where({ email: email })
+  .then((data) => {
+    if (data.length) { return Boom.badRequest('Email already in use'); }
+    else { return; }
+  });
+  return reply(promise);
 }

@@ -1,3 +1,3 @@
 module.exports = {
-  env: 'DEV'
+  env: 'DEV' // ['DEV', 'PROD', 'STAGING']
 };
