@@ -12,5 +12,6 @@ module.exports = [
   require('./auth/recover'),
   require('./auth/reset'),
   require('./auth/email'),
+  require('./auth/confirmChange'),
   require('./home')
 ]
