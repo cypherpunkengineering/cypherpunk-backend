@@ -69,7 +69,7 @@ module.exports = {
     .catch((err) => { return Boom.badImplementation(err); });
     return reply(promise);
   }
-}
+};
 
 function checkEmail(request, reply) {
   let email = request.payload.email.toLowerCase();

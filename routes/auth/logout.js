@@ -1,4 +1,3 @@
-const Joi = require('joi');
 const Boom = require('boom');
 
 module.exports = {
@@ -22,4 +21,4 @@ module.exports = {
     }
     else { return reply('logged out'); }
   }
-}
+};

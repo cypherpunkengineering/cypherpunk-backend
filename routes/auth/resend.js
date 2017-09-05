@@ -32,7 +32,7 @@ module.exports = {
     .catch((err) => { return Boom.badImplementation(err); });
     return reply(promise);
   }
-}
+};
 
 function getUser(request, reply) {
   let email = request.payload.email;

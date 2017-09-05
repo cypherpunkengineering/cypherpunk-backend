@@ -1,6 +1,3 @@
-const Joi = require('joi');
-const Boom = require('boom');
-
 module.exports = {
   method: 'GET',
   path: '/register',
@@ -10,4 +7,4 @@ module.exports = {
   handler: (request, reply) => {
     return reply.file('./register.html');
   }
-}
+};

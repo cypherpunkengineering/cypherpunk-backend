@@ -33,7 +33,7 @@ module.exports = {
     .catch((err) => { return Boom.badImplementation(err); });
     return reply(promise);
   }
-}
+};
 
 function currentUser(request, reply) {
   let id = request.auth.credentials.id;

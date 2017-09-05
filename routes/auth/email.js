@@ -43,7 +43,7 @@ module.exports = {
     .catch((err) => { return Boom.badImplementation(err); });
     return reply(promise);
   }
-}
+};
 
 function checkPendingEmails(request, reply) {
   let email = request.payload.email.toLowerCase();

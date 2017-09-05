@@ -60,7 +60,7 @@ module.exports = {
     .catch((err) => { return Boom.badImplementation(err); });
     return reply(promise);
   }
-}
+};
 
 function getUser(request, reply) {
   let userId = request.payload.accountId;
@@ -71,4 +71,8 @@ function getUser(request, reply) {
     else { return Boom.badRequest('User Not Found'); }
   });
   return reply(promise);
+}
+
+function updateConfirmedCount(db) {
+  return db('user_counters').where({ type: 'confirmed' }).increment('count');
 }
