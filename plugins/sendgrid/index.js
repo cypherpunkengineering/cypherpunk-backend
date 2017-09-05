@@ -54,6 +54,32 @@ function recovery(args) {
   .then(() => { console.log('Sent confirmation email to: ' + args.to); });
 }
 
+/**
+ * args: {
+ *   to: string, (user's email)
+ *   id: string, (user's id)
+ *   pendingEmailToken: string, (user's recovery token)
+ * }
+ */
+function changeEmail(args) {
+  return mailer.mail({
+    to: args.to,
+    from: {
+      name: 'Cypherpunk Privacy',
+      email: 'hello@cypherpunk.com'
+    },
+    subject: 'Confirm your new email address',
+    templateId: templates.transactional,
+    substitutions: {
+      titleText: `You're almost done...`,
+			regularText: 'Click the button below to confirm your new email address',
+			buttonText: 'CONFIRM MY EMAIL',
+			buttonURL: generateChangeConfirmationUrl(args.id, args.pendingEmailToken)
+    }
+  })
+  .then(() => { console.log('Sent confirmation email to: ' + args.to); });
+}
+
 
 
 // TODO: add mass mailer functions here
@@ -83,5 +109,6 @@ function generateTeaserConfirmationUrl(id, confirmationToken) {
 
 module.exports = {
   registration: registration,
-  recovery: recovery
+  recovery: recovery,
+  changeEmail: changeEmail
 };

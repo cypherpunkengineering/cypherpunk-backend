@@ -11,5 +11,6 @@ module.exports = [
   require('./auth/resend'),
   require('./auth/recover'),
   require('./auth/reset'),
+  require('./auth/email'),
   require('./home')
 ]
