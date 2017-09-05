@@ -41,7 +41,7 @@ function mail(arg) {
       'X-Accept-Language': 'en',
       'X-Mailer': 'CypherpunkPrivacyMail'
     }
-  }
+  };
 
   if (valid.valid) { return mailer.send(msg); }
   else { return Promise.reject(valid.error); }
@@ -49,4 +49,4 @@ function mail(arg) {
 
 module.exports = {
   mail: mail
-}
+};

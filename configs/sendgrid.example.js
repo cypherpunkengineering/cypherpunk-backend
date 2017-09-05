@@ -6,4 +6,4 @@ module.exports = {
   sendgrid: {
     key: 'apikey'
   }
-}
+};

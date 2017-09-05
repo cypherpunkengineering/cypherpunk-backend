@@ -36,7 +36,7 @@ server.register(Inert)
 // slack integration
 .then(() => { return server.decorate('request', 'slack', slack); })
 // sendgrid integration
-.then(() => { return server.decorate('request', 'mailer', mailer)})
+.then(() => { return server.decorate('request', 'mailer', mailer); })
 // db decoration
 .then(() => { return server.decorate('request', 'db', db); })
 // session caching (30 days)
@@ -52,9 +52,3 @@ server.register(Inert)
 .then(() => { console.log(`Server running at: ${server.info.uri}`); })
 // catch all error handling
 .catch((err) => { throw err; });
-
-
-// db.select().from('users').first()
-// .then((data) => {
-//   console.log(data);
-// });
