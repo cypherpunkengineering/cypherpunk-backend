@@ -28,6 +28,34 @@ function registration(args) {
   .then(() => { console.log('Sent confirmation email to: ' + args.to); });
 }
 
+/**
+ * args: {
+ *   to: string, (user's email)
+ *   id: string, (user's id)
+ *   recoveryToken: string, (user's recovery token)
+ * }
+ */
+function recovery(args) {
+  return mailer.mail({
+    to: args.to,
+    from: {
+      name: 'Cypherpunk Privacy',
+      email: 'hello@cypherpunk.com'
+    },
+    subject: 'Reset your password',
+    templateId: templates.transactional,
+    substitutions: {
+      titleText: 'Reset your account password',
+			regularText: 'Click the button below to set your new account password',
+			buttonText: 'RESET MY PASSWORD',
+			buttonURL: generateAccountRecoveryUrl(args.id, args.recoveryToken)
+    }
+  })
+  .then(() => { console.log('Sent confirmation email to: ' + args.to); });
+}
+
+
+
 // TODO: add mass mailer functions here
 
 /** Utility Functions **/
@@ -36,16 +64,16 @@ function generateConfirmationUrl(id, confirmationToken) {
 	return baseUrl + `confirm?accountId=${id}&confirmationToken=${confirmationToken}`;
 }
 
-function generateActivateInvitationUrl(id, recoveryToken) {
-	return baseUrl + `activate?accountId=${id}&recoveryToken=${recoveryToken}`;
+function generateAccountRecoveryUrl(id, recoveryToken) {
+  return baseUrl + `reset?accountId=${id}&recoveryToken=${recoveryToken}`;
 }
 
 function generateChangeConfirmationUrl(id, pendingEmailToken) {
-	return baseUrl + `confirmChange?accountId=${id}&confirmationToken=${pendingEmailToken}`;
+  return baseUrl + `confirmChange?accountId=${id}&confirmationToken=${pendingEmailToken}`;
 }
 
-function generateAccountRecoveryUrl(id, recoveryToken) {
-	return baseUrl + `reset?accountId=${id}&recoveryToken=${recoveryToken}`;
+function generateActivateInvitationUrl(id, recoveryToken) {
+	return baseUrl + `activate?accountId=${id}&recoveryToken=${recoveryToken}`;
 }
 
 function generateTeaserConfirmationUrl(id, confirmationToken) {
@@ -54,5 +82,6 @@ function generateTeaserConfirmationUrl(id, confirmationToken) {
 
 
 module.exports = {
-  registration: registration
+  registration: registration,
+  recovery: recovery
 };

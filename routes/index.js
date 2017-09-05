@@ -9,5 +9,6 @@ module.exports = [
   require('./auth/status'),
   require('./auth/confirm'),
   require('./auth/resend'),
+  require('./auth/recover'),
   require('./home')
 ]
