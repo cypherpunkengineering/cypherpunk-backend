@@ -1,7 +1,6 @@
 const Joi = require('joi');
 const Boom = require('boom');
 const bcrypt = require('bcrypt');
-const randToken = require('rand-token');
 
 module.exports = {
   method: 'POST',
@@ -14,7 +13,7 @@ module.exports = {
         confirmationToken: Joi.string().required()
       }
     },
-    // check if email already exists before handler
+    // get user attached to this account id 
     pre: [ { method: getUser, assign: 'user' } ]
   },
   handler: (request, reply) => {

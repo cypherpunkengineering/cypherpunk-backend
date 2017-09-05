@@ -8,5 +8,6 @@ module.exports = [
   require('./auth/register/post'),
   require('./auth/status'),
   require('./auth/confirm'),
+  require('./auth/resend'),
   require('./home')
 ]
