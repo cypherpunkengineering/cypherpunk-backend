@@ -34,7 +34,7 @@ module.exports = {
     let promise = request.db('users').update({
       pending_email: user.pending_email,
       pending_email_confirmation_token: user.pendingToken
-    })
+    }).where({ id: user.id })
     // send change email ... err ...  email
     .then(() => {
       let msg = { to: user.pending_email, id: user.id, pendingEmailToken: user.pendingToken };

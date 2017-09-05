@@ -31,7 +31,7 @@ module.exports = {
     let promise = request.db('users').update({
       confirmed: true,
       confirmation_token: null
-    })
+    }).where({ id: user.id })
     // TODO: enable radius?
     // notify slack of new confirmation
     .then(() => {

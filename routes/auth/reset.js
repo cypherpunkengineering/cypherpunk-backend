@@ -36,6 +36,7 @@ module.exports = {
       recovery_token: null,
       password: bcrypt.hashSync(request.payload.password, 15)
     })
+    .where({ id: user.id })
     // TODO: must update radius DB again because account might now be confirmed when it previously wasn't confirmed
     // notify slack of new account password
     .then(() => {

@@ -37,7 +37,7 @@ module.exports = {
       email: user.pending_email,
       pending_email: null,
       pending_email_confirmation_token: null
-    })
+    }).where({ id: user.id })
     // TODO: enable radius?
     // notify slack of new confirmation
     .then(() => {
@@ -58,6 +58,7 @@ module.exports = {
     .then(() => {
       if (!previouslyConfirmed) { request.slack.count(); }
     })
+    // TODO: update stripe with new email
     .catch((err) => { return Boom.badImplementation(err); });
     return reply(promise);
   }

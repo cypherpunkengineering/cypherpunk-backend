@@ -20,7 +20,9 @@ module.exports = {
     user.recovery_token = randToken.generate(32);
 
     // update recovery token on this account
-    let promise = request.db('users').update('recovery_token', user.recovery_token)
+    let promise = request.db('users')
+    .update('recovery_token', user.recovery_token)
+    .where({ id: user.id})
     .then(() => {
       let msg = { to: user.email, id: user.id, recoveryToken: user.recovery_token };
       return request.mailer.recovery(msg);
