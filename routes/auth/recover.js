@@ -1,6 +1,5 @@
 const Joi = require('joi');
 const Boom = require('boom');
-const bcrypt = require('bcrypt');
 const randToken = require('rand-token');
 
 module.exports = {
