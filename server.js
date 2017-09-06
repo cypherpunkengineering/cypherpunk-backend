@@ -20,6 +20,8 @@ const logOptions = require('./configs/logging');
 const slack = require('./plugins/slack');
 const mailer = require('./plugins/sendgrid');
 const plans = require('./plugins/plans');
+const subscriptions = require('./plugins/subscriptions');
+const stripe = require('./plugins/stripe');
 
 // bootstrap server with redis as a cache
 const server = new Hapi.Server({ cache: [{
@@ -40,6 +42,10 @@ server.register(Inert)
 .then(() => { return server.decorate('request', 'mailer', mailer); })
 // plans integration
 .then(() => { return server.decorate('request', 'plans', plans); })
+// subscription integration
+.then(() => { return server.decorate('request', 'subscriptions', subscriptions); })
+// stripe integration
+.then(() => { return server.decorate('request', 'stripe', stripe); })
 // db decoration
 .then(() => { return server.decorate('request', 'db', db); })
 // session caching (30 days)
