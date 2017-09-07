@@ -36,12 +36,12 @@ module.exports = {
     // notify slack of new confirmation
     .then(() => {
       let text = `[CONFIRM] User ${user.email} has been confirmed :sunglasses:`;
-      request.slack.billing(text);
+      request.slack.billing(text); // TODO catch and print?
     })
     // update count
     .then(() => { return updateConfirmedCount(request.db); })
     // print count to slack
-    .then(() => { request.slack.count(); })
+    .then(() => { request.slack.count(); }) // TODO catch and print?
     .catch((err) => { return Boom.badImplementation(err); });
     return reply(promise);
   }

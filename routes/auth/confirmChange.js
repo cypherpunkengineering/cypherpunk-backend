@@ -41,22 +41,25 @@ module.exports = {
     // TODO: enable radius?
     // notify slack of new confirmation
     .then(() => {
+      // TODO catch and print?
       let text = `[CHANGE] User email change from ${previousEmail} to ${user.pending_email} has been confirmed :sunglasses:`;
       request.slack.billing(text);
     })
     // if not previously confirmed, notify slack of new confirmation
     .then(() => {
       if (!previouslyConfirmed) {
+        // TODO catch and print?
         request.slack.billing(`[CONFIRM] User ${user.email} has been confirmed :sunglasses:`);
       }
     })
     // if not previously confirmed, update confirmation count
     .then(() => {
+      // TODO catch and print?
       if (!previouslyConfirmed) { return updateConfirmedCount(request.db); }
     })
     // if not previously confirmed, print count to slack
     .then(() => {
-      if (!previouslyConfirmed) { request.slack.count(); }
+      if (!previouslyConfirmed) { request.slack.count(); } // TODO catch and print?
     })
     // TODO: update stripe with new email
     .catch((err) => { return Boom.badImplementation(err); });

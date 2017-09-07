@@ -23,11 +23,11 @@ module.exports = {
 
     // re-send welcome email
     let msg = { to: user.email, id: user.id, confirmationToken: user.confirmation_token };
-    let promise = request.mailer.registration(msg)
+    let promise = request.mailer.registration(msg) // TODO catch and print?
     // notify slack of new confirmation
     .then(() => {
       let text = `[RESEND] User ${user.email} has requested re-send of confirmation email :love_letter:`;
-      request.slack.billing(text);
+      request.slack.billing(text); // TODO catch and print?
     })
     .catch((err) => { return Boom.badImplementation(err); });
     return reply(promise);

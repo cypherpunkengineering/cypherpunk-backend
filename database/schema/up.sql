@@ -62,14 +62,14 @@ CREATE TABLE subscriptions (
   renewal_timestamp timestamp with time zone,
   expiration_timestamp timestamp with time zone,
   cancellation_timestamp timestamp with time zone,
-  currentPeriodStart_timestamp timestamp with time zone,
-  currentPeriodEnd_timestamp timestamp with time zone
+  current_period_start_timestamp timestamp with time zone,
+  current_period_end_timestamp timestamp with time zone
 );
 
 
 CREATE TABLE stripe (
   id uuid NOT NULL DEFAULT uuid_generate_v4() PRIMARY KEY,
-  customer_id character varying (255) NOT NULL,
+  customer_id character varying(255) NOT NULL,
   stripe_data json
 );
 

@@ -41,11 +41,12 @@ module.exports = {
     // notify slack of new account password
     .then(() => {
       let text = `[RECOVER] User ${user.email} has completed account recovery by email :+1:`;
-      request.slack.billing(text);
+      request.slack.billing(text); // TODO catch and print?
     })
     // if not previously confirmed, notify slack of new confirmation
     .then(() => {
       if (!previouslyConfirmed) {
+        // TODO catch and print?
         request.slack.billing(`[CONFIRM] User ${user.email} has been confirmed :sunglasses:`);
       }
     })
@@ -55,7 +56,7 @@ module.exports = {
     })
     // if not previously confirmed, print count to slack
     .then(() => {
-      if (!previouslyConfirmed) { request.slack.count(); }
+      if (!previouslyConfirmed) { request.slack.count(); } // TODO catch and print?
     })
     .catch((err) => { return Boom.badImplementation(err); });
     return reply(promise);

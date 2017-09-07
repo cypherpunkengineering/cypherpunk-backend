@@ -38,7 +38,7 @@ module.exports = {
     // send change email ... err ...  email
     .then(() => {
       let msg = { to: user.pending_email, id: user.id, pendingEmailToken: user.pendingToken };
-      request.mailer.changeEmail(msg);
+      request.mailer.changeEmail(msg); // TODO catch and print?
     })
     .catch((err) => { return Boom.badImplementation(err); });
     return reply(promise);

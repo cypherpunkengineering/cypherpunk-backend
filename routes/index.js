@@ -14,5 +14,6 @@ module.exports = [
   require('./auth/email'),
   require('./auth/confirmChange'),
   require('./auth/password'),
+  require('./payment/stripe'),
   require('./home')
-]
+];
