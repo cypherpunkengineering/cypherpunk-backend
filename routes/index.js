@@ -15,5 +15,6 @@ module.exports = [
   require('./auth/confirmChange'),
   require('./auth/password'),
   require('./payment/stripe'),
+  require('./payment/amazon'),
   require('./home')
 ];

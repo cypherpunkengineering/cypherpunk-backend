@@ -284,6 +284,9 @@ const defaultPlansTest = {
 
 
 module.exports = {
+  defaultPlanId: defaultPlanId,
+  defaultPlans: defaultPlans,
+  defaultPlansTest: defaultPlansTest,
   getDefaultPlans: () => {
     if (generalConfigs === 'DEV') { return defaultPlansTest; }
     else { return defaultPlans; }

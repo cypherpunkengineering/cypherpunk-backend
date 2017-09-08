@@ -2,3 +2,4 @@ node_modules
 logs/cypher-log*
 configs/sendgrid.js
 configs/stripe.js
+configs/amazon.js

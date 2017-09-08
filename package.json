@@ -26,6 +26,9 @@
     "mongodb": "^2.2.31",
     "pg": "^7.2.0",
     "rand-token": "^0.3.0",
-    "stripe": "^4.25.0"
+    "request": "^2.81.0",
+    "request-promise": "^4.2.1",
+    "stripe": "^4.25.0",
+    "xml2js": "^0.4.19"
   }
 }

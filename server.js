@@ -22,6 +22,7 @@ const mailer = require('./plugins/sendgrid');
 const plans = require('./plugins/plans');
 const subscriptions = require('./plugins/subscriptions');
 const stripe = require('./plugins/stripe');
+const amazon = require('./plugins/amazon');
 
 // bootstrap server with redis as a cache
 const server = new Hapi.Server({ cache: [{
@@ -46,6 +47,8 @@ server.register(Inert)
 .then(() => { return server.decorate('request', 'subscriptions', subscriptions); })
 // stripe integration
 .then(() => { return server.decorate('request', 'stripe', stripe); })
+// amazon integration
+.then(() => { return server.decorate('request', 'amazon', amazon); })
 // db decoration
 .then(() => { return server.decorate('request', 'db', db); })
 // session caching (30 days)
