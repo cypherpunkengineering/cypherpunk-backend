@@ -17,16 +17,15 @@ module.exports = {
     catch (e) { data.custom = {}; }
 
     // use txn_type to switch on how to handle this message
-    data.txn_type = 'subscr_signup';
     switch (data.txn_type) {
       case 'subscr_signup':
-        onSubscriptionSignup(request, reply, data).then(() => { return reply(); });
+        onSubscriptionSignup(request, reply, data);
         break;
       case 'subscr_cancel':
-        onSubscriptionCancel(request, reply, data).then(() => { return reply(); });
+        onSubscriptionCancel(request, reply, data);
         break;
       case 'subscr_payment':
-        onSubscriptionPayment(request, reply, data).then(() => { return reply(); });
+        onSubscriptionPayment(request, reply, data);
         break;
       case 'subscr_eot':
         sendSlackNotification(request.slack, data);
@@ -113,7 +112,7 @@ function onSubscriptionSignup(request, reply, data) {
   // find user by account id
   let user, subscriptionRenewal, columns = ['id', 'email'];
   let promise = request.db.select(columns).from('users').where({ id: data.cypherpunk_account_id })
-  .then(() => {
+  .then((data) => {
     if (data.length) { user = data[0]; }
     else { throw Boom.notFound('Cypherpunk Id not found'); }
   })
@@ -138,7 +137,7 @@ function onSubscriptionSignup(request, reply, data) {
       user_id: user.id,
       type: planType,
       plan_id: planId,
-      provider: 'amazon',
+      provider: 'paypal',
       provider_id: provider.id,
       active: true,
       current: true,
@@ -162,7 +161,7 @@ function onSubscriptionSignup(request, reply, data) {
     request.mailer.purchase(msg); // TODO catch and print?
   })
   // notify slack of new signup
-  .then(() => { sendSlackNotification(request, data, user); })
+  .then(() => { sendSlackNotification(request.slack, data, user); })
   .catch((err) => {
     if (err.isBoom) { return err; }
     else { return Boom.badImplementation(err); }
