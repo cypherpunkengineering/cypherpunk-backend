@@ -81,10 +81,54 @@ function changeEmail(args) {
 }
 
 
+/**
+ * args: {
+ *   to: string, (user's email)
+ *   subscriptionPrice: string, (subscription price)
+ *   subcriptionRenewal: string, (how often subscription renews)
+ *   subscriptionExpiration: string, (when this subscription expires)
+ * }
+ */
+function purchase(args) {
+  return mailer.mail({
+    to: args.to,
+    from: {
+      name: 'Cypherpunk Privacy',
+      email: 'support@cypherpunk.com'
+    },
+    subject: `You've got Premium Access to Cypherpunk Privacy`,
+    templateId: templates.purchase,
+    substitutions: {
+      userEmail: args.to,
+			subscriptionPrice: args.subscriptionPrice,
+			subscriptionRenewal: args.subscriptionRenewal,
+			subscriptionExpiration: formatDate(args.subscriptionExpiration)
+    }
+  })
+  .then(() => { console.log('Sent confirmation email to: ' + args.to); });
+}
+
+
+
 
 // TODO: add mass mailer functions here
 
 /** Utility Functions **/
+
+function formatDate(date) {
+  let monthNames = [
+    'January', 'February', 'March',
+    'April', 'May', 'June', 'July',
+    'August', 'September', 'October',
+    'November', 'December'
+  ];
+
+  let day = date.getDate();
+  let monthIndex = date.getMonth();
+  let year = date.getFullYear();
+
+  return day + ' ' + monthNames[monthIndex] + ' ' + year;
+}
 
 function generateConfirmationUrl(id, confirmationToken) {
 	return baseUrl + `confirm?accountId=${id}&confirmationToken=${confirmationToken}`;
@@ -110,5 +154,6 @@ function generateTeaserConfirmationUrl(id, confirmationToken) {
 module.exports = {
   registration: registration,
   recovery: recovery,
-  changeEmail: changeEmail
+  changeEmail: changeEmail,
+  purchase: purchase
 };
