@@ -16,7 +16,8 @@ module.exports = [
   require('./auth/password'),
   require('./payment/stripe'),
   require('./payment/amazon'),
-  require('./payment/paypal'),
-  require('./payment/bitpay'),
+  require('./payment/ipn/paypal'),
+  require('./payment/ipn/bitpay'),
+  require('./payment/ipn/stripe'),
   require('./home')
 ];

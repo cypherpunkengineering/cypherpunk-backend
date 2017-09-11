@@ -52,7 +52,7 @@ CREATE TABLE subscriptions (
   type character varying(255), -- monthly, semiannually, annually
   plan_id character varying(255), -- monthly899, etc
   provider character varying(255), -- stripe, amazon, paypal, bitpay, android, ios
-  provider_id character varying(255), -- stripe id, amazon id, paypal id, bitpay id
+  provider_id uuid, -- stripe id, amazon id, paypal id, bitpay id
   active boolean DEFAULT false NOT NULL,
   current boolean DEFAULT false NOT NULL,
   created_at timestamp with time zone NOT NULL DEFAULT now(),
@@ -69,7 +69,7 @@ CREATE TABLE subscriptions (
 
 CREATE TABLE stripe (
   id uuid NOT NULL DEFAULT uuid_generate_v4() PRIMARY KEY,
-  customer_id character varying(255) NOT NULL,
+  customer_id character varying(255) NOT NULL UNIQUE,
   stripe_data json
 );
 

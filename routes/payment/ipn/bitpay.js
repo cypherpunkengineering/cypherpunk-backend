@@ -122,7 +122,7 @@ function onInvoicePaid(request, reply, data) {
   .then(() => {
     let msg = {
       to: user.email,
-      subscriptionPlan: plan.price,
+      subscriptionPrice: plan.price,
       subscriptionRenewal: planType,
       subscriptionExpiration: subscriptionRenewal
     };

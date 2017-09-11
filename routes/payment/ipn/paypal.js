@@ -107,8 +107,6 @@ function onSubscriptionSignup(request, reply, data) {
     return reply(Boom.badRequest(`Plan price doesn't match payment amount`));
   }
 
-  console.log('subscription signup paypal');
-
   // find user by account id
   let user, subscriptionRenewal, columns = ['id', 'email', 'type'];
   let promise = request.db.select(columns).from('users').where({ id: data.cypherpunk_account_id })
@@ -154,7 +152,7 @@ function onSubscriptionSignup(request, reply, data) {
   .then(() => {
     let msg = {
       to: user.email,
-      subscriptionPlan: plan.price,
+      subscriptionPrice: plan.price,
       subscriptionRenewal: planType,
       subscriptionExpiration: subscriptionRenewal
     };

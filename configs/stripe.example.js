@@ -1,3 +1,4 @@
 module.exports = {
-  secret_key: ''
+  secret_key: '',
+  endpoint_secret: ''
 };

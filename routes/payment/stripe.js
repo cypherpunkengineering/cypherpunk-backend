@@ -49,7 +49,7 @@ module.exports = {
 
     // create stripe account
     let customer, user;
-    let promise = request.stripe.customers.create(stripeArgs)
+    let promise = request.stripe.api.customers.create(stripeArgs)
     .then((stripeCustomer) => { customer = stripeCustomer; })
     // save user account
     .then(() => {
