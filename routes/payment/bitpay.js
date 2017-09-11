@@ -45,9 +45,6 @@ function sendSlackNotification(slack, data, user) {
   // indent slack style
   msg += '\r>>>\r';
 
-  // append paypal payer email
-  msg += `\BitPay account: ${data.payer_email} :${data.residence_country}: (${data.payer_status})`;
-
   // if present, append cypherpunk account email
   if (user && user.email) {
     msg += `\rCypherpunk account: ${user.email} (${user.type})`;
@@ -87,7 +84,7 @@ function onInvoicePaid(request, reply, data) {
   console.log('SubscriptionRenewal: ', subscriptionRenewal);
 
   // find user by account id
-  let user, columns = ['id', 'email'];
+  let user, columns = ['id', 'email', 'type'];
   let promise = request.db.select(columns).from('users').where({ id: data.cypherpunk_account_id })
   .then((data) => {
     if (data.length) { user = data[0]; }
@@ -99,7 +96,7 @@ function onInvoicePaid(request, reply, data) {
     return request.db.insert({
       bitpay_ident: data.invoice_id,
       bitpay_data: data
-    }).into('bitpay').returning('id')
+    }).into('bitpay').returning('*')
     .then((data) => { return data[0]; });
   })
   // create subscription

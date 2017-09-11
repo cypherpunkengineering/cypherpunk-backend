@@ -5,8 +5,6 @@ module.exports = {
   path: '/api/v1/ipn/paypal',
   config: { auth: false },
   handler: (request, reply) => {
-    console.log(request.payload);
-
     // convert custom string into JS object
     let data = request.payload;
     try {
@@ -109,8 +107,10 @@ function onSubscriptionSignup(request, reply, data) {
     return reply(Boom.badRequest(`Plan price doesn't match payment amount`));
   }
 
+  console.log('subscription signup paypal');
+
   // find user by account id
-  let user, subscriptionRenewal, columns = ['id', 'email'];
+  let user, subscriptionRenewal, columns = ['id', 'email', 'type'];
   let promise = request.db.select(columns).from('users').where({ id: data.cypherpunk_account_id })
   .then((data) => {
     if (data.length) { user = data[0]; }
@@ -128,7 +128,7 @@ function onSubscriptionSignup(request, reply, data) {
     return request.db.insert({
       paypal_ident: data.subscr_id,
       paypal_data: data
-    }).into('paypal').returning('id')
+    }).into('paypal').returning('*')
     .then((data) => { return data[0]; });
   })
   // create subscription
