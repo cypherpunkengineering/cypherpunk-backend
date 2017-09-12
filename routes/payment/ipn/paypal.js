@@ -170,18 +170,16 @@ function onSubscriptionSignup(request, reply, data) {
 function onSubscriptionCancel(request, reply, data) {
   // validate custom args
   if (!data.cypherpunk_account_id) { return reply(Boom.badRequest('Invalid Account Id')); }
-  if (!data.cypherpunk_plan_type) { return reply(Boom.badRequest('Invalid Plan Type')); }
 
   // find user by account id
-  let user, columns = ['id', 'email'];
+  let user, columns = ['id', 'email', 'type'];
   let promise = request.db.select(columns).from('users').where({ id: data.cypherpunk_account_id })
-  .then(() => {
+  .then((data) => {
     if (data.length) { user = data[0]; }
     else { throw Boom.notFound('Cypherpunk Id not found'); }
   })
-  // TODO: create charge object for paypal
   // notify slack of new signup
-  .then(() => { sendSlackNotification(request, data, user); })
+  .then(() => { sendSlackNotification(request.slack, data, user); })
   .catch((err) => {
     if (err.isBoom) { return err; }
     else { return Boom.badImplementation(err); }
@@ -194,15 +192,39 @@ function onSubscriptionPayment(request, reply, data) {
   if (!data.cypherpunk_account_id) { return reply(Boom.badRequest('Invalid Account Id')); }
   if (!data.cypherpunk_plan_type) { return reply(Boom.badRequest('Invalid Plan Type')); }
 
+  // validate plan type
+  let planType = request.plans.getPricingPlanType(data.cypherpunk_plan_type);
+  if (!planType) { return reply(Boom.badRequest('Invalid Plan Type')); }
+
+  // validate plan object and price
+  let planId = data.item_number;
+  let plan = request.plans.getPlanByTypeAndID(planType, planId);
+  if (!plan) { return reply(Boom.badRequest('Unknown Paypal Item Number')); }
+  if (+plan.price !== +data.mc_gross) {
+    return reply(Boom.badRequest(`Plan price doesn't match payment amount`));
+  }
+
   // find user by account id
-  let user, columns = ['id', 'email'];
+  let user, columns = ['id', 'email', 'type'];
   let promise = request.db.select(columns).from('users').where({ id: data.cypherpunk_account_id })
-  .then(() => {
+  .then((data) => {
     if (data.length) { user = data[0]; }
     else { throw Boom.notFound('Cypherpunk Id not found'); }
   })
-  // notify slack of new signup
-  .then(() => { sendSlackNotification(request, data, user); })
+  // create new paypal charge
+  .then(() => {
+    return request.db.insert({
+      gateway: 'paypal',
+      transaction_id: data.txn_id,
+      user_id: user.id,
+      plan_id: planId,
+      currency: 'USD',
+      amount: plan.price,
+      data: data
+    }).into('charges').returning('*');
+  })
+  // notify slack of new payment
+  .then(() => { sendSlackNotification(request.slack, data, user); })
   .catch((err) => {
     if (err.isBoom) { return err; }
     else { return Boom.badImplementation(err); }

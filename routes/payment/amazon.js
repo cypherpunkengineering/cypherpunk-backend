@@ -50,7 +50,7 @@ module.exports = {
       AmazonBillingAgreementId: request.payload.AmazonBillingAgreementId
     };
 
-    // create stripe account
+    // confirm amazon billing agreement
     let user, authorizeArgs;
     let promise = request.amazon.confirmBillingAgreement(amazonArgs)
     // save user account
@@ -106,6 +106,18 @@ module.exports = {
         current_period_end_timestamp: subscriptionRenewal
       };
       return request.db.insert(subscription).into('subscriptions').returning('*');
+    })
+    // create charge
+    .then(() => {
+      return request.db.insert({
+        gateway: 'amazon',
+        transaction_id: authorizeArgs.authorizationReference,
+        user_id: user.id,
+        plan_id: planId,
+        currency: 'USD',
+        amount: plan.price,
+        data: authorizeArgs
+      }).into('charges').returning('*');
     })
     // create session and cookie for user
     .then(() => {

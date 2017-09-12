@@ -106,6 +106,38 @@ CREATE TABLE bitpay (
 );
 
 
+-- Charge
+-- id
+-- created_at
+-- updated_at
+-- gateway (stripe, paypal, amazon, bitpay)
+-- transaction_id
+-- user_id
+-- plan_id
+-- currency
+-- amount
+-- refunded
+-- refund_amount
+-- refund_date
+-- data
+
+CREATE TABLE charges (
+  id uuid NOT NULL DEFAULT uuid_generate_v4() PRIMARY KEY,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  updated_at timestamp with time zone NOT NULL DEFAULT now(),
+  gateway character varying(255) NOT NULL,
+  transaction_id character varying(255),
+  user_id uuid REFERENCES users (id) NOT NULL,
+  plan_id character varying(255) NOT NULL,
+  currency character varying(255) NOT NULL,
+  amount money NOT NULL,
+  refunded boolean DEFAULT false,
+  refund_amount money,
+  refund_date timestamp with time zone,
+  data json NOT NULL
+);
+
+
 -- BillingPackage
 -- - PackageID
 -- - PackageName
@@ -122,14 +154,6 @@ CREATE TABLE bitpay (
 -- ??
 -- - InvoicePaid (bool)
 --
--- Charge
--- - ChargeID
--- - ChargeGateway (stripe, paypal, etc.)
--- - ChargeTransactionID
--- - ChargeUserID
--- - ChargePlanID
--- - ChargeCurrency
--- - ChargeAmount
 --
 -- Chargeback
 -- - ???

@@ -16,8 +16,8 @@ module.exports = {
     let payload = request.pre.payload;
 
     // stripe customer id
-    // let customerId = payload.data.object.customer;
-    let customerId = 'cus_BNYFDYJUWZWbc7';
+    let customerId = payload.data.object.customer;
+    // let customerId = 'cus_BNvEMrcJOOghqW';
     if (!customerId) { return console.log('Customer Id Not Found'); }
 
     // find user by stripe customer id
@@ -26,7 +26,7 @@ module.exports = {
     .join('subscriptions', 'stripe.id', 'subscriptions.provider_id')
     .join('users', 'subscriptions.user_id', 'users.id')
     .where({ 'stripe.customer_id': customerId })
-    .select('users.id', 'users.email', 'users.type')
+    .select('users.id', 'users.email', 'users.type', 'subscriptions.type')
     // validate user is found
     .then((data) => {
       if (data.length) { user = data[0]; }
@@ -47,7 +47,6 @@ module.exports = {
 };
 
 function sendSlackNotification(slack, data, user) {
-  console.log(data);
   let msg = "[*Stripe*] ";
 
   switch (data.type) {
@@ -75,18 +74,32 @@ function onChargeSucceeded(request, payload, user) {
   let chargeData = payload.data.object;
   if (!chargeData) { return console.log('Stripe Data Object incomplete'); }
 
-  let created = chargeData.created || payload.created || Math.floor((new Date()).getTime() / 1000);
-  chargeData.created = new Date(created * 1000);
-  chargeData.cypherpunk_account_id = user.id;
-  chargeData.sourceID = chargeData.source.id;
-  chargeData.sourceBrand = chargeData.source.brand;
-  chargeData.sourceLast4 = chargeData.source.last4;
-  chargeData.sourceExpMonth = chargeData.source.exp_month;
-  chargeData.sourceExpYear = chargeData.source.exp_year;
+  // get plan based on request.payload.plan
+  let planType = request.plans.getPricingPlanType(user.type);
+  if (!planType) { return console.log('Invalid Plan'); }
+  console.log('PlanType: ', planType);
 
-  // TODO: create charge
+  // get stripePlan based on request.payload.plan
+  let planId = request.plans.defaultPlanId[user.type];
+  if (!planId) { return console.log('Invalid Plan'); }
+  console.log('PlanId: ', planId);
 
-  // TODO: create charge receipt
+  let plan = request.plans.getPlanByTypeAndID(planType, planId);
+  if (!plan || !plan.price) { return console.log('Invalid Plan'); }
+  payload.data.object.amount = plan.price;
+  console.log('Plan: ', plan);
+
+  // create charge
+  request.db.insert({
+    gateway: 'stripe',
+    transaction_id: payload.data.object.id,
+    user_id: user.id,
+    plan_id: planId,
+    currency: 'USD',
+    amount: plan.price,
+    data: payload
+  }).into('charges').returning('*')
+  .catch((e) => { console.log(e); });
 
   sendSlackNotification(request.slack, payload, user);
 }

@@ -90,7 +90,6 @@ function onInvoicePaid(request, reply, data) {
     if (data.length) { user = data[0]; }
     else { throw Boom.notFound('Cypherpunk Id not found'); }
   })
-  // TODO: create charge object
   // create paypal object in db
   .then(() => {
     return request.db.insert({
@@ -117,6 +116,19 @@ function onInvoicePaid(request, reply, data) {
     };
     return request.db.insert(subscription).into('subscriptions').returning('*');
   })
+  // create charge object
+  .then(() => {
+    return request.db.insert({
+      gateway: 'bitpay',
+      transaction_id: data.invoice_id,
+      user_id: user.id,
+      plan_id: planId,
+      currency: 'USD',
+      amount: data.amount,
+      data: data
+    }).into('charges').returning('*');
+  })
+
   // TODO: update radius
   // send purchase email
   .then(() => {
