@@ -22,5 +22,6 @@ module.exports = [
   require('./app/versions'),
   require('./pricing/plans'),
   require('./monitoring/hello'),
+  require('./vpn/certificate'),
   require('./home')
 ];
