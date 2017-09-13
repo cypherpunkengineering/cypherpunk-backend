@@ -19,5 +19,6 @@ module.exports = [
   require('./payment/ipn/paypal'),
   require('./payment/ipn/bitpay'),
   require('./payment/ipn/stripe'),
+  require('./app/versions'),
   require('./home')
 ];
