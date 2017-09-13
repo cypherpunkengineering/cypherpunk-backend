@@ -21,6 +21,7 @@ const slack = require('./plugins/slack');
 const mailer = require('./plugins/sendgrid');
 const plans = require('./plugins/plans');
 const subscriptions = require('./plugins/subscriptions');
+const world = require('./plugins/world');
 const stripe = require('./plugins/stripe');
 const amazon = require('./plugins/amazon');
 
@@ -45,6 +46,8 @@ server.register(Inert)
 .then(() => { return server.decorate('request', 'plans', plans); })
 // subscription integration
 .then(() => { return server.decorate('request', 'subscriptions', subscriptions); })
+// world integration
+.then(() => { return server.decorate('request', 'world', world); })
 // stripe integration
 .then(() => { return server.decorate('request', 'stripe', stripe); })
 // amazon integration

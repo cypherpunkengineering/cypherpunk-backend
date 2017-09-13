@@ -23,5 +23,7 @@ module.exports = [
   require('./pricing/plans'),
   require('./monitoring/hello'),
   require('./vpn/certificate'),
+  require('./location/world'),
+  require('./location/list'),
   require('./home')
 ];
