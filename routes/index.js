@@ -21,5 +21,6 @@ module.exports = [
   require('./payment/ipn/stripe'),
   require('./app/versions'),
   require('./pricing/plans'),
+  require('./monitoring/hello'),
   require('./home')
 ];
