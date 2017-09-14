@@ -39,6 +39,12 @@ module.exports = {
       let subscription = { user_id: user.id, current: true };
       return request.db.insert(subscription).into('subscriptions').returning('*');
     })
+    // create radius tokens
+    .then((data) => {
+      let username = request.radius.makeRandomString(26), password = request.radius.makeRandomString(26);
+      request.radius.addToken(user.id, username, password);
+      request.radius.addTokenGroup(username, user.type);
+    })
     // create session and cookie for user
     .then(() => {
       return new Promise((resolve, reject) => {
