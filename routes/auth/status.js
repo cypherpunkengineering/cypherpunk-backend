@@ -8,13 +8,12 @@ module.exports = {
     let userId = request.auth.credentials.id;
     let user = {};
     let sub = {};
+    let radius = {};
 
     let accountColumns = [
       'id',
       'email',
       'secret',
-      'privacy_username',
-      'privacy_password',
       'type',
       'confirmed'
     ];
@@ -39,13 +38,21 @@ module.exports = {
         else { throw Boom.badRequest('Invalid Session'); }
       });
     })
+    // get radius data
+    .then(() => {
+      return request.db.select('username', 'value').from('radius_tokens').where({ account: userId })
+      .then((data) => {
+        if (data.length) { radius = data[0]; }
+        else { throw Boom.badRequest('Invalid Radius Account'); }
+      });
+    })
     // merge object into return value
     .then(() => {
       return {
         secret: user.secret || '',
         privacy: {
-          username: user.privacy_username,
-          password: user.privacy_password
+          username: radius.username,
+          password: radius.value
         },
         account: {
           id: user.id,

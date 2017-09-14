@@ -1,3 +1,5 @@
+DROP TABLE IF EXISTS radius_token_groups;
+DROP TABLE IF EXISTS radius_tokens;
 DROP TABLE IF EXISTS stripe_sources;
 DROP TABLE IF EXISTS subscriptions;
 DROP TABLE IF EXISTS charges;

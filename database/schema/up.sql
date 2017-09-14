@@ -18,9 +18,7 @@ CREATE TABLE users (
   pending_email character varying(255) UNIQUE,
   pending_email_confirmation_token character varying(255),
   referral_id character varying(255),
-  referral_name character varying(255),
-  privacy_username character varying(255) NOT NULL,
-  privacy_password character varying(255) NOT NULL
+  referral_name character varying(255)
 );
 
 
@@ -32,6 +30,25 @@ CREATE TABLE user_counters (
 );
 INSERT INTO user_counters (type, count) VALUES ('registered', 0);
 INSERT INTO user_counters (type, count) VALUES ('confirmed', 0);
+
+
+-- Radius tokens
+CREATE TABLE radius_tokens (
+  id SERIAL NOT NULL PRIMARY KEY,
+  account uuid NOT NULL REFERENCES users(id),
+  username character varying(64) NOT NULL,
+  attribute character varying(64) NOT NULL,
+  op character(2) NOT NULL DEFAULT '==',
+  value character varying(255) NOT NULL
+);
+
+-- Radius groups
+CREATE TABLE radius_token_groups (
+  username character varying(64) NOT NULL,
+  groupname character varying(64) NOT NULL,
+  priority integer NOT NULL DEFAULT 9000
+);
+CREATE INDEX ON radius_token_groups (username);
 
 
 -- Subscription

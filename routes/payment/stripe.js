@@ -60,9 +60,7 @@ module.exports = {
         type: 'premium',
         priority: 1,
         confirmed: false,
-        confirmation_token: randToken.generate(32),
-        privacy_username: randToken.generate(32),
-        privacy_password: randToken.generate(32)
+        confirmation_token: randToken.generate(32)
       };
       return request.db.insert(user).into('users').returning('*')
       .then((data) => { user = data[0]; }); // hold on to user data

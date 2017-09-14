@@ -28,9 +28,7 @@ module.exports = {
       type: 'free',
       priority: 1,
       confirmed: false,
-      confirmation_token: randToken.generate(32),
-      privacy_username: randToken.generate(32),
-      privacy_password: randToken.generate(32)
+      confirmation_token: randToken.generate(32)
     };
     let promise = request.db.insert(user).into('users').returning('*')
     // create subscription
@@ -38,6 +36,13 @@ module.exports = {
       user = data[0];
       let subscription = { user_id: user.id, current: true };
       return request.db.insert(subscription).into('subscriptions').returning('*');
+    })
+    // create radius tokens
+    .then(() => {
+      let username = request.radius.makeRandomString(26),
+          password = request.radius.makeRandomString(26);
+      return request.radius.addToken(user.id, username, password)
+      .then(() => { return request.radius.addTokenGroup(username, user.type); });
     })
     // create session and cookie for user
     .then(() => {
@@ -51,7 +56,6 @@ module.exports = {
         });
       });
     })
-    // TODO: update radius
     // send welcome email
     .then(() => {
       let msg = { to: user.email, id: user.id, confirmationToken: user.confirmation_token };

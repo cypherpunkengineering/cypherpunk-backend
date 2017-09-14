@@ -29,9 +29,7 @@ module.exports = {
       confirmed: false,
       recovery_token: randToken.generate(32),
       referral_id: referralId,
-      referral_name: referralName,
-      privacy_username: randToken.generate(32),
-      privacy_password: randToken.generate(32)
+      referral_name: referralName
     };
     let promise = request.db.insert(user).into('users').returning('*')
     .then((data) => { user = data[0]; })
