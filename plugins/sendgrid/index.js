@@ -25,7 +25,7 @@ function registration(args) {
 			buttonURL: generateConfirmationUrl(args.id, args.confirmationToken)
     }
   })
-  .then(() => { console.log('Sent confirmation email to: ' + args.to); });
+  .then(() => { console.log('Sent registration confirmation email to: ' + args.to); });
 }
 
 /**
@@ -51,7 +51,7 @@ function recovery(args) {
 			buttonURL: generateAccountRecoveryUrl(args.id, args.recoveryToken)
     }
   })
-  .then(() => { console.log('Sent confirmation email to: ' + args.to); });
+  .then(() => { console.log('Sent recovery email to: ' + args.to); });
 }
 
 /**
@@ -77,7 +77,7 @@ function changeEmail(args) {
 			buttonURL: generateChangeConfirmationUrl(args.id, args.pendingEmailToken)
     }
   })
-  .then(() => { console.log('Sent confirmation email to: ' + args.to); });
+  .then(() => { console.log('Sent email change confirmation email to: ' + args.to); });
 }
 
 
@@ -105,7 +105,43 @@ function purchase(args) {
 			subscriptionExpiration: formatDate(args.subscriptionExpiration)
     }
   })
-  .then(() => { console.log('Sent confirmation email to: ' + args.to); });
+  .then(() => { console.log('Sent purchase email to: ' + args.to); });
+}
+
+
+/**
+ * args: {
+ *   to: string, (user's email)
+ *   id: string, (user's id)
+ *   recoveryToken: string, (user's recovery token)
+ *   referralId: string (referrer's Id)
+ *   referralName: string (referrer's Name)
+ * }
+ */
+function teaserShare(args) {
+  // adjust subject based on referralName
+  let subject = `You've been invited to Cypherpunk Privacy`;
+  if (args.referralName) { subject = `${args.referralName} has invited you to Cypherpunk Privacy`; }
+
+  let regularText = 'Click the button below to accept your invitation';
+  if (args.referralName) { regularText = regularText + ` from ${args.referralName}`; }
+
+  return mailer.mail({
+    to: args.to,
+    from: {
+      name: 'Cypherpunk Privacy',
+      email: 'hello@cypherpunk.com'
+    },
+    subject: subject,
+    templateId: templates.transactional,
+    substitutions: {
+      titleText: '',
+			regularText: regularText,
+			buttonText: 'ACCEPT MY INVITATION',
+			buttonURL: generateActivateInvitationUrl(args.id, args.recoveryToken)
+    }
+  })
+  .then(() => { console.log('Sent invitation confirmation email to: ' + args.to); });
 }
 
 
@@ -155,5 +191,6 @@ module.exports = {
   registration: registration,
   recovery: recovery,
   changeEmail: changeEmail,
-  purchase: purchase
+  purchase: purchase,
+  teaserShare: teaserShare
 };

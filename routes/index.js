@@ -25,5 +25,6 @@ module.exports = [
   require('./vpn/certificate'),
   require('./location/world'),
   require('./location/list'),
+  require('./auth/teaserShare'),
   require('./home')
 ];

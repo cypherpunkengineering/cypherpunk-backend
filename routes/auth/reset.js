@@ -29,8 +29,12 @@ module.exports = {
     // keep track of whether user was previously confirmed
     let previouslyConfirmed = user.confirmed;
 
+    // update user's type to 'free' if currently 'invitation'
+    let type = (user.type === 'invitation') ? 'free' : user.type;
+
     // delete recovery token
     let promise = request.db('users').update({
+      type: type,
       confirmed: true,
       confirmation_token: null,
       recovery_token: null,
@@ -65,7 +69,7 @@ module.exports = {
 
 function getUser(request, reply) {
   let userId = request.payload.accountId;
-  let columns = ['id', 'email', 'confirmed', 'recovery_token'];
+  let columns = ['id', 'email', 'confirmed', 'type', 'recovery_token'];
   let promise = request.db.select(columns).from('users').where({ id: userId })
   .then((data) => {
     if (data.length) { return data[0]; }
