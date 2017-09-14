@@ -18,9 +18,7 @@ CREATE TABLE users (
   pending_email character varying(255) UNIQUE,
   pending_email_confirmation_token character varying(255),
   referral_id character varying(255),
-  referral_name character varying(255),
-  privacy_username character varying(255) NOT NULL,
-  privacy_password character varying(255) NOT NULL
+  referral_name character varying(255)
 );
 
 

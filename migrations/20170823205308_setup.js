@@ -15,8 +15,6 @@ exports.up = function(knex, Promise) {
       table.string('pendingEmailConfirmationToken');
       table.string('referralID');
       table.string('referralName');
-      table.string('privacy_username');
-      table.string('privacy_password');
     })
   ]);
 };

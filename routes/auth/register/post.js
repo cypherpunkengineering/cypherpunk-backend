@@ -28,9 +28,7 @@ module.exports = {
       type: 'free',
       priority: 1,
       confirmed: false,
-      confirmation_token: randToken.generate(32),
-      privacy_username: randToken.generate(32),
-      privacy_password: randToken.generate(32)
+      confirmation_token: randToken.generate(32)
     };
     let promise = request.db.insert(user).into('users').returning('*')
     // create subscription
