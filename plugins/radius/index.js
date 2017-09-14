@@ -16,7 +16,7 @@ function makeRandomString(length = 26) {
 }
 
 function addRadiusToken(userId, tokenUsername, tokenPassword) {
-  db.insert({
+  return db.insert({
     account: userId,
     username: tokenUsername,
     attribute: 'NT-Password',
@@ -26,11 +26,11 @@ function addRadiusToken(userId, tokenUsername, tokenPassword) {
 }
 
 function removeRadiusToken(userId) {
-  db('radius_tokens').where('account', userId).del();
+  return db('radius_tokens').where('account', userId).del();
 }
 
 function updateRadiusTokenPassword(userId, newTokenPassword) {
-  db('radius_tokens').where('account', userId).update({
+  return db('radius_tokens').where('account', userId).update({
     attribute: 'NT-Password',
     op: ':=',
     value: nthash(newTokenPassword),
@@ -38,7 +38,7 @@ function updateRadiusTokenPassword(userId, newTokenPassword) {
 }
 
 function addRadiusTokenGroup(tokenUsername, group, priority) {
-  db.insert({
+  return db.insert({
     username: tokenUsername,
     groupname: group,
     priority: priority || DEFAULT_GROUP_PRIORITIES[group] || 9000,
@@ -50,7 +50,7 @@ function removeRadiusTokenGroup(tokenUsername, group) {
   if (typeof group !== 'undefined') {
     query = query.where('groupname', group);
   }
-  query.del();
+  return query.del();
 }
 
 module.exports = {

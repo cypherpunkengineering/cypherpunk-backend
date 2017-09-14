@@ -40,10 +40,11 @@ module.exports = {
       return request.db.insert(subscription).into('subscriptions').returning('*');
     })
     // create radius tokens
-    .then((data) => {
-      let username = request.radius.makeRandomString(26), password = request.radius.makeRandomString(26);
-      request.radius.addToken(user.id, username, password);
-      request.radius.addTokenGroup(username, user.type);
+    .then(() => {
+      let username = request.radius.makeRandomString(26),
+          password = request.radius.makeRandomString(26);
+      return request.radius.addToken(user.id, username, password)
+      .then(() => { return request.radius.addTokenGroup(username, user.type); });
     })
     // create session and cookie for user
     .then(() => {
@@ -57,7 +58,6 @@ module.exports = {
         });
       });
     })
-    // TODO: update radius
     // send welcome email
     .then(() => {
       let msg = { to: user.email, id: user.id, confirmationToken: user.confirmation_token };
