@@ -34,6 +34,25 @@ INSERT INTO user_counters (type, count) VALUES ('registered', 0);
 INSERT INTO user_counters (type, count) VALUES ('confirmed', 0);
 
 
+-- Radius tokens
+CREATE TABLE radius_tokens (
+  id SERIAL NOT NULL PRIMARY KEY,
+  account uuid NOT NULL REFERENCES users(id),
+  username character varying(64) NOT NULL,
+  attribute character varying(64) NOT NULL,
+  op character(2) NOT NULL DEFAULT '==',
+  value character varying(255) NOT NULL
+);
+
+-- Radius groups
+CREATE TABLE radius_token_groups (
+  username character varying(64) NOT NULL,
+  groupname character varying(64) NOT NULL,
+  priority integer NOT NULL DEFAULT 9000
+);
+CREATE INDEX ON radius_token_groups (username);
+
+
 -- Subscription
 -- - SubscriptionPlan (asciiNoSpace string id of payment gateway defined plan)
 -- - SubscriptionProviderID (asciiNoSpace string id of payment gateway: stripe etc.)
