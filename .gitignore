@@ -3,3 +3,4 @@ logs/cypher-log*
 configs/sendgrid.js
 configs/stripe.js
 configs/amazon.js
+configs/mongo.js

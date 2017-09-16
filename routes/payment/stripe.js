@@ -90,6 +90,7 @@ module.exports = {
       .then((data) => { return data[0]; });
     })
     // create subscription
+    // TODO: unset current on the default subscription
     .then((stripeObj) => {
       let subscription = {
         user_id: user.id,
