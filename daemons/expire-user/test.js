@@ -1,4 +1,4 @@
-const db = require('../database');
+const db = require('../../database');
 const randToken = require('rand-token');
 
 
@@ -41,5 +41,5 @@ return db('users').insert(user).returning('*')
   console.log('New Subscription: ', sub);
 
   // fire expired daemon
-  require('./expired');
+  require('./index');
 });

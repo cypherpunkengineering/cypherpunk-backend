@@ -5,6 +5,7 @@ postgres
 redis
 node (via nvm)
 PM2 (via npm install -g pm2)
+forever (via npm install -g forever)
 knex (via npm install -g knex)
 
 NPM dependencies:
@@ -58,7 +59,8 @@ Main file: server.js
   - run with PM2 for production
   - run with nodemon for dev
 Daemons:
-  - run ./daemons/expired.js in a separate thread
+  - run ./daemons/expire-user in a separate thread using forever?
+  - run ./daemons/amazon-recurring in a separate thread using forever?
 
 TODO:
  -- billing system

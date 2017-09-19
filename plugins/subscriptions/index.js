@@ -1,6 +1,6 @@
 module.exports = {
-  calculateRenewal: (plan) => {
-    let subscriptionStart = new Date();
+  calculateRenewal: (plan, date) => {
+    let subscriptionStart = date || new Date();
     let subscriptionRenewal = new Date(+subscriptionStart);
 
     if (plan === 'trial') {
