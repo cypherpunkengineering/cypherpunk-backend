@@ -1,16 +1,13 @@
-const MongoClient = require('mongodb').MongoClient;
-const config = require('../../configs/mongo');
-const uri = config.uri;
 const pg = require('../../database');
-const radius = require('../../plugins/radius');
-const mailer = require('../../plugins/sendgrid');
 const randToken = require('rand-token');
-
+const config = require('../../configs/mongo');
+const radius = require('../../plugins/radius');
+const MongoClient = require('mongodb').MongoClient;
+const uri = config.uri;
 
 let keys = new Set();
 let dataKeys = new Set();
 let testKeys = new Set();
-let usersAdded = new Set();
 
 let skippedUsers = [];
 let cypherUsers = [
@@ -106,7 +103,6 @@ return new Promise((resolve, reject) => {
 })
 // update counts
 .then(updateCounts)
-.then(emailUsers)
 // error handling
 .catch((e) => {
   db.close();
@@ -188,7 +184,6 @@ function portUser(user) {
   return pg.insert(newUser).into('users').returning('*')
   .then((data) => { pgUser = data[0]; })
   .then(() => { return generateRadius(pgUser); }) // create radius account
-  .then(() => { usersAdded.add(newUser); }) // add user email to email list
   .catch((e) => {
     console.log('Could not generate account for: ', user.data.email);
     console.log(e);
@@ -203,21 +198,6 @@ function generateRadius(pgUser) {
   .catch((e) => {
     console.log('Could not generate radius account for: ', pgUser.id);
     console.log(e);
-  });
-}
-
-function emailUsers() {
-  console.log(`Emailing ${usersAdded.size}  users with password reset email`);
-
-  let timer = 0;
-
-  usersAdded.forEach((user) => {
-    timer = timer + 100;
-    setTimeout(() => {
-      console.log(`sending email to ${user.email}:${user.recovery_token}`);
-      let msg = { to: user.email, id: user.id, recoveryToken: user.recovery_token };
-      mailer.migration(msg);
-    }, timer);
   });
 }
 
