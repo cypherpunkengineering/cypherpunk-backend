@@ -23,6 +23,8 @@ module.exports = {
     ]
   },
   handler: (request, reply) => {
+    // TODO: error if already logged in
+
     // get plan based on request.payload.plan
     let planType = request.plans.getPricingPlanType(request.payload.plan);
     if (!planType) { return reply(Boom.badRequest('Invalid Plan')); }

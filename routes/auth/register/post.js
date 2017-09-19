@@ -31,12 +31,6 @@ module.exports = {
       confirmation_token: randToken.generate(32)
     };
     let promise = request.db.insert(user).into('users').returning('*')
-    // create subscription
-    .then((data) => {
-      user = data[0];
-      let subscription = { user_id: user.id, current: true };
-      return request.db.insert(subscription).into('subscriptions').returning('*');
-    })
     // create radius tokens
     .then(() => {
       let username = request.radius.makeRandomString(26),

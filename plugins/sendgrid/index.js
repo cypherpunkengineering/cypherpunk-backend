@@ -144,7 +144,31 @@ function teaserShare(args) {
   .then(() => { console.log('Sent invitation confirmation email to: ' + args.to); });
 }
 
-
+/**
+ * args: {
+ *   to: string, (user's email)
+ *   id: string, (user's id)
+ *   recoveryToken: string, (user's recovery token)
+ * }
+ */
+function migration(args) {
+  return mailer.mail({
+    to: args.to,
+    from: {
+      name: 'Cypherpunk Privacy',
+      email: 'hello@cypherpunk.com'
+    },
+    subject: `We've reset your password`,
+    templateId: templates.transactional,
+    substitutions: {
+      titleText: `We've moved to a better system!`,
+			regularText: 'Click the button below to set your new account password',
+			buttonText: 'RESET MY PASSWORD',
+			buttonURL: generateAccountRecoveryUrl(args.id, args.recoveryToken)
+    }
+  })
+  .then(() => { console.log('Sent recovery email to: ' + args.to); });
+}
 
 
 // TODO: add mass mailer functions here
@@ -192,5 +216,6 @@ module.exports = {
   recovery: recovery,
   changeEmail: changeEmail,
   purchase: purchase,
-  teaserShare: teaserShare
+  teaserShare: teaserShare,
+  migration: migration
 };

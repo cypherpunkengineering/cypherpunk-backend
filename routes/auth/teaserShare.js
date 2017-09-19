@@ -33,11 +33,6 @@ module.exports = {
     };
     let promise = request.db.insert(user).into('users').returning('*')
     .then((data) => { user = data[0]; })
-    // create subscription
-    .then(() => {
-      let subscription = { user_id: user.id, current: true };
-      return request.db.insert(subscription).into('subscriptions').returning('*');
-    })
     // TODO: update radius
     // send teaserShare email
     .then(() => {

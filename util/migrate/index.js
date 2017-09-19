@@ -3,10 +3,14 @@ const config = require('../../configs/mongo');
 const uri = config.uri;
 const pg = require('../../database');
 const radius = require('../../plugins/radius');
+const mailer = require('../../plugins/sendgrid');
+const randToken = require('rand-token');
+
 
 let keys = new Set();
 let dataKeys = new Set();
 let testKeys = new Set();
+let usersAdded = new Set();
 
 let skippedUsers = [];
 let cypherUsers = [
@@ -94,14 +98,15 @@ return new Promise((resolve, reject) => {
   console.log('Total Number of users processed: ', users.length);
 
   console.log('Total Number of users skipped: ', skippedUsers.length);
-  // console.log('Skipped Users: ');
-  // skippedUsers.forEach((user) => { console.log(user); });
+  console.log('Skipped Users: ');
+  skippedUsers.forEach((user) => { console.log(user); });
 
   // close mongo db connection
   return db.close();
 })
 // update counts
 .then(updateCounts)
+.then(emailUsers)
 // error handling
 .catch((e) => {
   db.close();
@@ -159,7 +164,7 @@ function portUser(user) {
 
   // create new user
   let newUser = {
-    email: user.data.email,
+    email: user.data.email.toLowerCase(),
     type: user.type,
     priority: 1,
     confirmed: user.data.confirmed,
@@ -167,7 +172,7 @@ function portUser(user) {
     pending_email: user.pendingEmail,
     pending_email_confirmation_token: user.pendingEmailConfirmationToken,
     confirmation_token: user.confirmationToken,
-    recovery_token: user.recoveryToken
+    recovery_token: user.recoveryToken || randToken.generate(32)
   };
 
   // handle last login for this user
@@ -182,70 +187,10 @@ function portUser(user) {
   let pgUser;
   return pg.insert(newUser).into('users').returning('*')
   .then((data) => { pgUser = data[0]; })
-  // create radius account
-  .then(() => { return generateRadius(pgUser); })
-  .then(() => { return generateStripe(user); })
-  // create subscription
-  .then((stripeId) => { return generateSub(user, pgUser, stripeId); })
+  .then(() => { return generateRadius(pgUser); }) // create radius account
+  .then(() => { usersAdded.add(newUser); }) // add user email to email list
   .catch((e) => {
     console.log('Could not generate account for: ', user.data.email);
-    console.log(e);
-  });
-}
-
-function generateSub(user, pgUser, stripe) {
-  // handle creating a subscription if no stripe object given
-  if (!stripe || !stripe.id) {
-    let subscription = { user_id: pgUser.id, current: true };
-    return pg.insert(subscription).into('subscriptions').returning('*');
-  }
-
-
-  // check to see if there is an existing subscription
-  return new Promise((resolve, reject) => {
-    MongoClient.connect(uri, function(err, mongoDb) {
-      if (err) { return reject(err); }
-      else { return resolve(mongoDb); }
-    });
-  })
-  .then((db) => {
-    return db.collection('subscription')
-    .find({ 'data.accountID': user.id })
-    .toArray();
-  })
-  .then((sub) => {
-    // no existing subscription object but has stripe id
-    if (!sub.length) {
-      let subscription = {
-        user_id: pgUser.id,
-        provider: 'stripe',
-        provider_id: stripe.id,
-        current: true
-      };
-      return pg.insert(subscription).into('subscriptions').returning('*');
-    }
-
-    // fully formed subscription with stripe
-    sub = sub[0];
-    let subscription = {
-      user_id: pgUser.id,
-      type: sub.type === 'trial' ? undefined : sub.type,
-      plan_id: sub.data.providerPlanID,
-      provider: sub.data.provider ? sub.data.provider : 'stripe',
-      provider_id: stripe.id,
-      active: true,
-      current: true,
-      created_at: new Date(sub.created),
-      start_timestamp: new Date(sub.created),
-      purchase_timestamp: sub.purchaseTS,
-      renewal_timestamp: sub.renewalTS,
-      current_period_start_timestamp: sub.currentPeriodStartTS,
-      current_period_end_timestamp: sub.currentPeriodEndTS
-    };
-    return pg.insert(subscription).into('subscriptions').returning('*');
-  })
-  .catch((e) => {
-    console.log('Could not generate a subscription for: ', user.data.email);
     console.log(e);
   });
 }
@@ -261,14 +206,18 @@ function generateRadius(pgUser) {
   });
 }
 
-function generateStripe(user) {
-  if (!user.data.stripeCustomerID) { return Promise.resolve(); }
-  return pg.insert({ customer_id: user.data.stripeCustomerID})
-  .into('stripe').returning('*')
-  .then((data) => { return data[0]; })
-  .catch((e) => {
-    console.log('Could not generate stripe for: ', user.data.email);
-    console.log(e);
+function emailUsers() {
+  console.log(`Emailing ${usersAdded.size}  users with password reset email`);
+
+  let timer = 0;
+
+  usersAdded.forEach((user) => {
+    timer = timer + 100;
+    setTimeout(() => {
+      console.log(`sending email to ${user.email}:${user.recovery_token}`);
+      let msg = { to: user.email, id: user.id, recoveryToken: user.recovery_token };
+      mailer.migration(msg);
+    }, timer);
   });
 }
 
@@ -300,11 +249,7 @@ function updateCounts() {
 }
 
 
-
 // TODO: send email reset password
 // should we keep the id?
 // how do we handle pUsername and pPassword? (email to tell them their account changed?)
 // how do we handle new password?
-// how do we handle the existing stripe customer accounts?
-// -- I vote to deleted them all for now
-// -- I also vote to not keep subscriptions when there isn't really one

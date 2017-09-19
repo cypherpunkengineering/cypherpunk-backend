@@ -33,10 +33,7 @@ module.exports = {
     // get user subscription data
     .then(() => {
       return request.db.select(subColumns).from('subscriptions').where({ user_id: userId })
-      .then((data) => {
-        if (data.length) { sub = data[0]; }
-        else { throw Boom.badRequest('Invalid Session'); }
-      });
+      .then((data) => { if (data.length) { sub = data[0]; } });
     })
     // get radius data
     .then(() => {
@@ -61,7 +58,7 @@ module.exports = {
           confirmed: user.confirmed || false,
         },
         subscription: {
-          active: sub.active,
+          active: sub.active || false,
           renews: sub.renewal_timestamp ? true : false,
           type: sub.type || 'preview',
           expiration: sub.expiration_timestamp || null
