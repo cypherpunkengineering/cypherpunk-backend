@@ -54,9 +54,4 @@ Main file: server.js
 
 
 TODO:
- - console log to log file
- - radius integration on registration route
- - mysql integration
- - mongo integration
-
  -- billing system

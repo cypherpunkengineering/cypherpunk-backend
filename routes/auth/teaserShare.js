@@ -33,7 +33,13 @@ module.exports = {
     };
     let promise = request.db.insert(user).into('users').returning('*')
     .then((data) => { user = data[0]; })
-    // TODO: update radius
+    // create radius tokens
+    .then(() => {
+      let username = request.radius.makeRandomString(26),
+          password = request.radius.makeRandomString(26);
+      return request.radius.addToken(user.id, username, password)
+      .then(() => { return request.radius.addTokenGroup(username, user.type); });
+    })
     // send teaserShare email
     .then(() => {
       let msg = {

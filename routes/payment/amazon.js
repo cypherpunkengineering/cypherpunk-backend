@@ -90,7 +90,6 @@ module.exports = {
       .then((data) => { return data[0]; });
     })
     // create subscription
-    // TODO: unset current on the default subscription
     .then((provider) => {
       let subscription = {
         user_id: user.id,
@@ -132,7 +131,13 @@ module.exports = {
         });
       });
     })
-    // TODO: update radius
+    // create radius tokens
+    .then(() => {
+      let username = request.radius.makeRandomString(26),
+          password = request.radius.makeRandomString(26);
+      return request.radius.addToken(user.id, username, password)
+      .then(() => { return request.radius.addTokenGroup(username, user.type); });
+    })
     // send welcome email
     .then(() => {
       let msg = { to: user.email, id: user.id, confirmationToken: user.confirmation_token };

@@ -249,7 +249,6 @@ function updateCounts() {
 }
 
 
-// TODO: send email reset password
 // should we keep the id?
 // how do we handle pUsername and pPassword? (email to tell them their account changed?)
 // how do we handle new password?
