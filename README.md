@@ -25,6 +25,12 @@ NPM dependencies:
  - rand-token (random token generator)
  - @slack/client (slack sdk/api)
  - @sendgrid/mail (sendgrid mail api)
+ - stripe
+ - xml2js
+ - request
+ - request-promise
+ - mongodb
+ - node-schedule
 
 
 ## Configuration
@@ -51,7 +57,8 @@ Set host on HOST env var or will default to 'localhost'
 Main file: server.js
   - run with PM2 for production
   - run with nodemon for dev
-
+Daemons:
+  - run ./daemons/expired.js in a separate thread
 
 TODO:
  -- billing system

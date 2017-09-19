@@ -105,6 +105,7 @@ module.exports = {
         start_timestamp: new Date(),
         purchase_timestamp: new Date(),
         renewal_timestamp: subscriptionRenewal,
+        expiration_timestamp: subscriptionRenewal,
         current_period_start_timestamp: new Date(),
         current_period_end_timestamp: subscriptionRenewal
       };
