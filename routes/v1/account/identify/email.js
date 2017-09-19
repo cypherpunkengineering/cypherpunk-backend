@@ -3,7 +3,7 @@ const Boom = require('boom');
 
 module.exports = {
   method: 'POST',
-  path: '/api/v1/account/change/email',
+  path: '/api/v1/account/identify/email',
   config: {
     auth: false,
     validate: { payload: { email: Joi.string().email().required() } },
