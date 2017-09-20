@@ -1,4 +1,5 @@
 const db = require('../../database');
+const randToken = require('rand-token');
 const schedule = require('node-schedule');
 const slack = require('../../plugins/slack');
 const amazon = require('../../plugins/amazon');
@@ -42,6 +43,7 @@ function chargeUser(user) {
   if (!subscriptionRenewal) { return console.log('Could not (amazon) charge user: ', user.id); }
 
   // amazon args
+  user.amazon_data.authorizationReference = randToken.generate(32);
   let amazonArgs = {
     plan: user.plan_id,
     AmazonBillingAgreementId: user.billing_agreement_id
