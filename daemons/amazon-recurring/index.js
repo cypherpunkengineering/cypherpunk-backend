@@ -17,6 +17,7 @@ function findAmazonRecurring() {
     'subscriptions.id as sub_id',
     'subscriptions.plan_id',
     'subscriptions.current_period_end_timestamp',
+    'amazon.id as amazon_id',
     'amazon.billing_agreement_id',
     'amazon.amazon_data'
   ];
@@ -24,6 +25,7 @@ function findAmazonRecurring() {
   .join('subscriptions', 'users.id', 'subscriptions.user_id')
   .join('amazon', 'subscriptions.provider_id', 'amazon.id')
   .where('subscriptions.current_period_end_timestamp', '<', recurDate)
+  .andWhere('amazon.tries', '<', 5)
   .andWhere({ 'subscriptions.current': true })
   .andWhere({ 'subscriptions.provider': 'amazon' })
   .select(columns)
@@ -88,7 +90,10 @@ function chargeUser(user) {
     let text = `[RECURRING] ${user.email} has made a payment of ${user.amazon_data.price} via Amazon :highfive:`;
       slack.billing(text); // TODO catch and print?
   })
-  .catch((e) => { console.log(e); });
+  .catch((e) => {
+    console.log(`Could not charge amazon account: ${user.id}: ` + e.message);
+    return db('amazon').where({ id: user.amazon_id }).increment('tries');
+  });
 }
 
 

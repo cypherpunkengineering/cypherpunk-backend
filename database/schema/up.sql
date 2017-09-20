@@ -105,6 +105,7 @@ CREATE TABLE stripe_sources (
 CREATE TABLE amazon (
   id uuid NOT NULL DEFAULT uuid_generate_v4() PRIMARY KEY,
   billing_agreement_id character varying(255) NOT NULL,
+  tries integer NOT NULL DEFAULT 0,
   amazon_data json
 );
 
