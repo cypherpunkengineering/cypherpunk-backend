@@ -28,8 +28,6 @@ function findAmazonRecurring() {
   .select(columns)
   // schedule a charge for each user returned
   .then((users) => {
-    console.log(users);
-
     users.forEach((user) => {
       let expiry = user.current_period_end_timestamp;
       if (expiry < new Date()) { chargeUser(user); }
@@ -42,7 +40,6 @@ function chargeUser(user) {
   // generate subscription renewal date
   let subscriptionRenewal = subscriptions.calculateRenewal(user.plan_id, user.current_period_end_timestamp);
   if (!subscriptionRenewal) { return console.log('Could not (amazon) charge user: ', user.id); }
-  console.log('Subscription Renewal: ', subscriptionRenewal);
 
   // amazon args
   let amazonArgs = {
