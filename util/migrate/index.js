@@ -146,9 +146,7 @@ function portUser(user) {
   if (skip) { return skippedUsers.push(user); }
 
   // handle user type
-  // if (user.type === 'trial') { user.type = 'free'; }
-  // if (user.type === 'invitation') { user.type = 'free'; }
-  // if (user.type === 'pending') { user. type = 'free'; }
+  if (user.type === 'trial') { user.type = 'free'; }
 
   // handle user confirmed
   if (user.data.confirmed && user.data.confirmed === 'true') {
@@ -229,6 +227,4 @@ function updateCounts() {
 }
 
 
-// should we keep the id?
 // how do we handle pUsername and pPassword? (email to tell them their account changed?)
-// how do we handle new password?
