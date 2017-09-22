@@ -6,7 +6,7 @@ CREATE TABLE users (
   email character varying(255) UNIQUE NOT NULL,
   password character varying(255),
   secret character varying(255) UNIQUE,
-  -- pending, invitation, expired, free, premium, elite, staff, developer
+  -- trial, pending, invitation, expired, free, premium, elite, staff, developer
   type character varying(255) NOT NULL,
   priority integer NOT NULL, -- 1, 2, 3
   confirmed boolean NOT NULL,
@@ -20,10 +20,12 @@ CREATE TABLE users (
   referral_id character varying(255),
   referral_name character varying(255)
 );
+CREATE INDEX ON users (type);
+CREATE INDEX ON users (confirmed);
+CREATE INDEX ON users (created_at);
 
 
 -- user counters
-
 CREATE TABLE user_counters (
   type character varying(255) NOT NULL, -- registered, confirmed
   count integer NOT NULL
@@ -82,6 +84,13 @@ CREATE TABLE subscriptions (
   current_period_start_timestamp timestamp with time zone,
   current_period_end_timestamp timestamp with time zone
 );
+CREATE INDEX ON subscriptions (user_id);
+CREATE INDEX ON subscriptions (current);
+CREATE INDEX ON subscriptions (created_at);
+CREATE INDEX ON subscriptions (start_timestamp);
+CREATE INDEX ON subscriptions (renewal_timestamp);
+CREATE INDEX ON subscriptions (cancellation_timestamp);
+CREATE INDEX ON subscriptions (current_period_end_timestamp);
 
 
 CREATE TABLE stripe (
@@ -100,6 +109,7 @@ CREATE TABLE stripe_sources (
   exp_year character varying(15) NOT NULL, -- I just guessed here too
   brand character varying(100) NOT NULL -- more guessing
 );
+CREATE INDEX ON stripe_sources (user_id);
 
 
 CREATE TABLE amazon (
