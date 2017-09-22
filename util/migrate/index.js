@@ -91,7 +91,7 @@ return new Promise((resolve, reject) => {
 // print stats
 .then((users) => {
   console.log('Shape of User: ', keys, '\n\n');
-  console.log('Share of User Data: ', dataKeys, '\n\n');
+  console.log('Shape of User Data: ', dataKeys, '\n\n');
   console.log('Total Number of users processed: ', users.length);
 
   console.log('Total Number of users skipped: ', skippedUsers.length);
@@ -146,9 +146,9 @@ function portUser(user) {
   if (skip) { return skippedUsers.push(user); }
 
   // handle user type
-  if (user.type === 'trial') { user.type = 'free'; }
-  if (user.type === 'invitation') { user.type = 'free'; }
-  if (user.type === 'pending') { user. type = 'free'; }
+  // if (user.type === 'trial') { user.type = 'free'; }
+  // if (user.type === 'invitation') { user.type = 'free'; }
+  // if (user.type === 'pending') { user. type = 'free'; }
 
   // handle user confirmed
   if (user.data.confirmed && user.data.confirmed === 'true') {

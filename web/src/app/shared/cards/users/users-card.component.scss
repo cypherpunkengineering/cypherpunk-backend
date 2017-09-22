@@ -1,0 +1,26 @@
+.card {
+  width: 250px;
+  min-height: 250px;
+  background-color: #ddd;
+  box-shadow: 3px 3px 5px #ccc;
+  border-radius: 5px;
+
+  .header {
+    padding: 10px;
+    text-align:center;
+    border-bottom: 1px solid #bbb;
+    font-size: 18px;
+    background-color: #ccc;
+    border-top-left-radius: 5px;
+    border-top-right-radius: 5px;
+  }
+
+  .body {
+    padding: 15px;
+
+    section { margin: 20px 0 10px; }
+    section:first-child { margin-top: 10px; }
+    .heading { font-size: 18px; margin: 10px 0; }
+    .count { margin-bottom: 10px; }
+  }
+}

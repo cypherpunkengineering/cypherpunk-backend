@@ -1,5 +1,3 @@
-const Joi = require('joi');
-
 module.exports = {
   method: 'GET',
   path: '/',
@@ -7,4 +5,4 @@ module.exports = {
   handler: (request, reply) => {
     return reply.file('./index.html');
   }
-}
+};

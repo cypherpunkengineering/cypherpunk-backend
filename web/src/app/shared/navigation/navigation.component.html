@@ -1,0 +1,37 @@
+<div id="nav" class="nav">
+  <div class="nav-left">
+    <a routerLink="/cp">
+      <img src="https://cypherpunk.com/assets/logo@2x.png" alt="Cypherpunk Privacy logo" title="Cypherpunk Privacy | Guardian of Online Privacy and Freedom">
+    </a>
+  </div>
+
+  <nav class="nav-right">
+    <ul>
+      <li class="nav-link no-margin">
+        <a (click)="logout()">
+          <button class="btn no-margin border">Log Out</button>
+        </a>
+      </li>
+    </ul>
+  </nav>
+  <div class="clear"></div>
+</div>
+
+<div class="mobile-nav">
+  <div class="mobile-nav-left">
+    <a routerLink="/cp">
+      <img src="https://cypherpunk.com/assets/logo@2x.png" class="mobile-logo" alt="Cypherpunk Privacy logo" title="Cypherpunk Privacy | Guardian of Online Privacy and Freedom">
+    </a>
+
+    <div class="mobile-nav-right" (click)="showDropDown = !showDropDown" *ngIf="enableLinks">
+      <img src="/assets/icon-menu.png" alt="Menu Button" title="Click to Open Menu">
+    </div>
+  </div>
+
+  <div class="mobile-drop-down" [ngClass]="{ 'open': showDropDown }">
+    <div class="mobile-dd-item" (click)="logout()">
+      Log Out
+    </div>
+  </div>
+  <div class="clear"></div>
+</div>

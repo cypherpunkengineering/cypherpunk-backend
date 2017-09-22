@@ -1,0 +1,25 @@
+.page {
+  display: flex;
+  flex-flow: column;
+  height: 100%;
+
+  .navigation { flex: 0 1 auto; }
+
+  .content {
+    display: flex;
+    flex: 1 1 auto;
+
+    .sidebar, .panel { display: flex; }
+
+    .panel {
+      flex: 1 1 auto;
+      padding: 20px;
+      background-color: #eee;
+    }
+  }
+}
+
+.dashboard {
+  display: block;
+  h2 { margin-top: 0; }
+}

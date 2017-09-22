@@ -1,8 +1,6 @@
 module.exports = [
-  require('./static'),
   // admin routes
-  require('./admin/login/get'),
-  require('./admin/register/get'),
+  require('./admin/users/counts/get'),
   require('./admin/home'),
   require('./admin/smoke'),
   // v1 routes
@@ -29,5 +27,7 @@ module.exports = [
   require('./v1/location/world'),
   require('./v1/monitoring/hello'),
   require('./v1/pricing/plans'),
-  require('./v1/vpn/certificate')
+  require('./v1/vpn/certificate'),
+  // static files
+  require('./static')
 ];

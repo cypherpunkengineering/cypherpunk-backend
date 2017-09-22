@@ -1,0 +1,16 @@
+.sidebar {
+  height: 100%;
+  color: #fff;
+  background-color: #0d1e26;
+
+  ul { list-style-type: none; }
+
+  ul, li { margin: 0; padding: 0; }
+
+  li {
+    padding: 15px 15px;
+    border-bottom: 1px solid #163138;
+    cursor: pointer;
+    &:hover { background-color: #163138; }
+  }
+}

@@ -32,7 +32,10 @@ module.exports = {
       referral_name: referralName
     };
     let promise = request.db.insert(user).into('users').returning('*')
-    .then((data) => { user = data[0]; })
+    .then((data) => {
+      if (data.length) { user = data[0]; }
+      else { throw new Error('Could not create user'); }
+    })
     // create radius tokens
     .then(() => {
       let username = request.radius.makeRandomString(26),

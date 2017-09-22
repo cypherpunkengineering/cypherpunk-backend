@@ -1,0 +1,31 @@
+<div class="parent">
+  <div class="panel">
+    <h2 class="header white">Sign into your Cypherpunk Privacy account</h2>
+
+    <div class="form">
+      <div class="row">
+        <input id="email" type="email" name="login" placeholder="Email" autofocus [(ngModel)]="user.email" [ngClass]="{'error': this.errors.email.message && this.errors.email.touched}" (blur)="this.errors.email.touched = true; validateEmail()">
+        <div class="error-message" [hidden]="!this.errors.email.touched">
+          {{this.errors.email.message}}
+        </div>
+      </div>
+
+      <div class="row">
+        <input type="password" name="password" placeholder="Password" [(ngModel)]="user.password" [ngClass]="{'error': this.errors.password.message && this.errors.password.touched}" (keyup.enter)="signin()" (ngModelChange)="validatePassword()" (blur)="this.errors.password.touched = true; validatePassword()">
+        <div class="error-message" [hidden]="!this.errors.password.touched">
+          {{this.errors.password.message}}
+        </div>
+      </div>
+
+      <div class="section center">
+        <button class="btn orange" type="button" (click)="signin()">
+          SIGN IN
+        </button>
+      </div>
+
+      <div class="section center">
+        <a class="signin-link" routerLink="/recover">Forgot Password?</a>
+      </div>
+    </div>
+  </div>
+</div>
