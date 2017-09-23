@@ -7,7 +7,18 @@ const ipnServer = {
   'sandbox': 'ipnpb.sandbox.paypal.com'
 };
 
-const paypal = new PayPal(config);
+const paypal = PayPal(config);
+
+function numberedExtraVariables(prefix, vars) {
+  var result = {};
+  if (!Array.isArray(vars)) {
+    vars = Object.keys(vars).map(k => encodeURIComponent(k) + '=' + encodeURIComponent(vars[k]));
+  }
+  for (var i = 0; i < vars.length; i++) {
+    result[prefix + (i + 1)]
+  }
+  return result;
+}
 
 module.exports = {
   createSubscriptionButton({
