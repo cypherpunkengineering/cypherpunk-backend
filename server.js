@@ -23,6 +23,7 @@ const plans = require('./plugins/plans');
 const subscriptions = require('./plugins/subscriptions');
 const world = require('./plugins/world');
 const stripe = require('./plugins/stripe');
+const paypal = require('./plugins/paypal');
 const amazon = require('./plugins/amazon');
 const radius = require('./plugins/radius');
 
@@ -51,6 +52,8 @@ server.register(Inert)
 .then(() => { return server.decorate('request', 'world', world); })
 // stripe integration
 .then(() => { return server.decorate('request', 'stripe', stripe); })
+// paypal integration
+.then(() => { return server.decorate('request', 'paypal', paypal); })
 // amazon integration
 .then(() => { return server.decorate('request', 'amazon', amazon); })
 // radius decoration
