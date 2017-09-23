@@ -43,8 +43,9 @@ function mail(arg) {
     }
   };
 
-  if (valid.valid) { return mailer.send(msg); }
-  else { return Promise.reject(valid.error); }
+  if (!valid.valid) { return Promise.reject(valid.error); }
+  else if (config.disabled) { console.log(`Skipped sending email to ${arg.to}`); return Promise.resolve(); }
+  else { return mailer.send(msg); }
 }
 
 module.exports = {
