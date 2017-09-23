@@ -19,8 +19,22 @@ switch (env) {
     break;
 }
 
+var host = process.env.HOST || 'localhost';
+var address = process.env.ADDRESS || (env === 'DEV' ? '127.0.0.1' : '0.0.0.0');
+var port = process.env.PORT || 9000;
+
+var tls = undefined;
+try {
+  tls = {
+    cert: fs.readFileSync('./cert.pem'),
+    key: fs.readFileSync('./privkey.pem'),
+  };
+} catch (e) {}
+
 module.exports = {
-  env, // ['DEV', 'PROD', 'STAGING']
-  host: process.env.HOST || 'localhost',
-  port: process.env.PORT || 9000
+  env,     // 'DEV', 'PROD', 'STAGING'
+  host,    // 'localhost'
+  address, // '0.0.0.0'
+  port,    // 9000
+  tls,     // { cert: '<file contents>', key: '<file contents>' }
 };

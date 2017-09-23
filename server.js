@@ -1,6 +1,4 @@
 const config = require('./configs/general');
-const PORT = config.port;
-const HOST = config.host;
 
 // vendor modules
 const path = require('path');
@@ -28,13 +26,13 @@ const amazon = require('./plugins/amazon');
 const radius = require('./plugins/radius');
 
 // bootstrap server with redis as a cache
-const server = new Hapi.Server({ cache: [{
+const server = module.exports = new Hapi.Server({ cache: [{
   engine: Redis,
   host: '127.0.0.1',
   partition: 'cache'
 }]});
 const files = { relativeTo: path.join(__dirname, 'public') }; // deliver files from public dir
-server.connection({ port: PORT, host: HOST, routes: { files } });
+server.connection({ port: config.port, host: config.host, address: config.address, tls: config.tls, routes: { files } });
 
 // static file serving
 server.register(Inert)
