@@ -27,6 +27,7 @@
     "node-schedule": "^1.2.5",
     "paypal-nvp-api": "^1.2.33",
     "pg": "^7.2.0",
+    "qs": "^6.5.1",
     "rand-token": "^0.3.0",
     "request": "^2.81.0",
     "request-promise": "^4.2.1",

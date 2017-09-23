@@ -1,14 +1,21 @@
 const Boom = require('boom');
+const qs = require('qs');
 
 module.exports = {
   method: 'POST',
   path: '/api/v1/ipn/paypal',
-  config: { auth: false },
+  config: {
+    auth: false,
+    payload: { output: 'data', parse: false },
+    pre: [ { method: validateIPN, assign: 'payload' } ]
+  },
   handler: (request, reply) => {
-    // convert custom string into JS object
-    let data = request.payload;
+    // Payload data actually parsed in pre handler
+    let data = request.pre.payload;
+    
+    // Parse custom data from JSON string parameter
     try {
-      data.custom = JSON.parse(request.payload.custom);
+      data.custom = JSON.parse(data.custom);
       data.cypherpunk_account_id = data.custom.id;
       data.cypherpunk_plan_type = request.plans.getPricingPlanType(data.custom.plan);
     }
@@ -230,5 +237,13 @@ function onSubscriptionPayment(request, reply, data) {
     if (err.isBoom) { return err; }
     else { return Boom.badImplementation(err); }
   });
+  return reply(promise);
+}
+
+function validateIPN(request, reply) {
+  let payload = request.payload.toString('utf8');
+  let promise = request.paypal.validateIPN(payload)
+  .then(() => qs.parse(payload))
+  .catch(err => Boom.badRequest(err.message));
   return reply(promise);
 }
