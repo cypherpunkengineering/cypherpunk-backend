@@ -57,7 +57,7 @@ module.exports = {
     // send welcome email
     .then(() => {
       let msg = { to: user.email, id: user.id, confirmationToken: user.confirmation_token };
-      request.mailer.registration(msg); // TODO catch and print?
+      return request.mailer.registration(msg); // TODO catch and print?
     })
     // notify slack of new signup
     .then(() => {
@@ -79,7 +79,8 @@ function checkEmail(request, reply) {
   .then((data) => {
     if (data.length) { return Boom.badRequest('Email already in use'); }
     else { return; }
-  });
+  })
+  .catch((err) => { console.error(err); return Boom.badImplementation(err); });
   return reply(promise);
 }
 
