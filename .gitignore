@@ -4,3 +4,5 @@ configs/sendgrid.js
 configs/stripe.js
 configs/amazon.js
 configs/mongo.js
+.DS_Store
+._.DS_Store
