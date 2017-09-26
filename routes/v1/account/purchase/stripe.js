@@ -48,7 +48,7 @@ module.exports = {
     };
 
     // create stripe account
-    let customer, user;
+    let customer, user, subscription;
     let promise = request.stripe.api.customers.create(stripeArgs)
     .then((stripeCustomer) => { customer = stripeCustomer; })
     // save user account
@@ -91,7 +91,7 @@ module.exports = {
     })
     // create subscription
     .then((stripeObj) => {
-      let subscription = {
+      subscription = {
         user_id: user.id,
         type: planType,
         plan_id: stripePlanId,
@@ -105,7 +105,8 @@ module.exports = {
         current_period_start_timestamp: new Date(),
         current_period_end_timestamp: subscriptionRenewal
       };
-      return request.db.insert(subscription).into('subscriptions').returning('*');
+      return request.db.insert(subscription).into('subscriptions').returning('*')
+      .then((data) => { subscription = data[0]; });
     })
     // create session and cookie for user
     .then(() => {

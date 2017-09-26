@@ -12,7 +12,7 @@ module.exports = {
   handler: (request, reply) => {
     // Payload data actually parsed in pre handler
     let data = request.pre.payload;
-    
+
     // Parse custom data from JSON string parameter
     try {
       data.custom = JSON.parse(data.custom);
@@ -115,7 +115,7 @@ function onSubscriptionSignup(request, reply, data) {
   }
 
   // find user by account id
-  let user, subscriptionRenewal, columns = ['id', 'email', 'type'];
+  let user, subscription, subscriptionRenewal, columns = ['id', 'email', 'type'];
   let promise = request.db.select(columns).from('users').where({ id: data.cypherpunk_account_id })
   .then((data) => {
     if (data.length) { user = data[0]; }
@@ -139,7 +139,7 @@ function onSubscriptionSignup(request, reply, data) {
   // create subscription
   // TODO: unset current on the default subscription object
   .then((provider) => {
-    let subscription = {
+    subscription = {
       user_id: user.id,
       type: planType,
       plan_id: planId,
@@ -153,7 +153,8 @@ function onSubscriptionSignup(request, reply, data) {
       current_period_start_timestamp: new Date(),
       current_period_end_timestamp: subscriptionRenewal
     };
-    return request.db.insert(subscription).into('subscriptions').returning('*');
+    return request.db.insert(subscription).into('subscriptions').returning('*')
+    .then((data) => { subscription = data[0]; });
   })
   // TODO: update radius
   // send purchase email
@@ -213,11 +214,19 @@ function onSubscriptionPayment(request, reply, data) {
   }
 
   // find user by account id
-  let user, columns = ['id', 'email', 'type'];
-  let promise = request.db.select(columns).from('users').where({ id: data.cypherpunk_account_id })
+  let user, columns = ['users.id', 'users.email', 'users.type', 'subscriptions.id as sub_id'];
+  let promise = request.db('users')
+  .join('subscriptions', 'users.id', 'subscriptions.user_id')
+  .where({
+    'users.id': data.cypherpunk_account_id,
+    'subscriptions.provider': 'paypal',
+    'subscriptions.current': true,
+    'subscriptions.plan_id': planId
+  })
+  .select(columns)
   .then((data) => {
     if (data.length) { user = data[0]; }
-    else { throw Boom.notFound('Cypherpunk Id not found'); }
+    else { throw Boom.notFound('Cypherpunk Account or Subscription not found'); }
   })
   // create new paypal charge
   .then(() => {
@@ -225,6 +234,7 @@ function onSubscriptionPayment(request, reply, data) {
       gateway: 'paypal',
       transaction_id: data.txn_id,
       user_id: user.id,
+      subscription_id: user.sub_id,
       plan_id: planId,
       currency: 'USD',
       amount: plan.price,

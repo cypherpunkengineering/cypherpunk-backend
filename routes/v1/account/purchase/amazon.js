@@ -51,7 +51,7 @@ module.exports = {
     };
 
     // confirm amazon billing agreement
-    let user, authorizeArgs;
+    let user, subscription, authorizeArgs;
     let promise = request.amazon.confirmBillingAgreement(amazonArgs)
     // save user account
     .then(() => {
@@ -89,7 +89,7 @@ module.exports = {
     })
     // create subscription
     .then((provider) => {
-      let subscription = {
+      subscription = {
         user_id: user.id,
         type: planType,
         plan_id: planId,
@@ -103,7 +103,8 @@ module.exports = {
         current_period_start_timestamp: new Date(),
         current_period_end_timestamp: subscriptionRenewal
       };
-      return request.db.insert(subscription).into('subscriptions').returning('*');
+      return request.db.insert(subscription).into('subscriptions').returning('*')
+      .then((data) => { subscription = data[0]; });
     })
     // create charge
     .then(() => {
@@ -111,6 +112,7 @@ module.exports = {
         gateway: 'amazon',
         transaction_id: authorizeArgs.authorizationReference,
         user_id: user.id,
+        subscription_id: subscription.id,
         plan_id: planId,
         currency: 'USD',
         amount: plan.price,

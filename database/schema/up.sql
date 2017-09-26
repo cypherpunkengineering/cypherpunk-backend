@@ -151,11 +151,12 @@ CREATE TABLE bitpay (
 
 CREATE TABLE charges (
   id uuid NOT NULL DEFAULT uuid_generate_v4() PRIMARY KEY,
+  user_id uuid REFERENCES users (id) NOT NULL,
+  subscription_id uuid REFERENCES subscriptions (id) NOT NULL,
   created_at timestamp with time zone NOT NULL DEFAULT now(),
   updated_at timestamp with time zone NOT NULL DEFAULT now(),
   gateway character varying(255) NOT NULL,
   transaction_id character varying(255),
-  user_id uuid REFERENCES users (id) NOT NULL,
   plan_id character varying(255) NOT NULL,
   currency character varying(255) NOT NULL,
   amount money NOT NULL,

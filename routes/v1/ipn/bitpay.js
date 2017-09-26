@@ -84,7 +84,7 @@ function onInvoicePaid(request, reply, data) {
   console.log('SubscriptionRenewal: ', subscriptionRenewal);
 
   // find user by account id
-  let user, columns = ['id', 'email', 'type'];
+  let user, subscription, columns = ['id', 'email', 'type'];
   let promise = request.db.select(columns).from('users').where({ id: data.cypherpunk_account_id })
   .then((data) => {
     if (data.length) { user = data[0]; }
@@ -101,7 +101,7 @@ function onInvoicePaid(request, reply, data) {
   // create subscription
   // TODO: unset current on the default subscription object
   .then((provider) => {
-    let subscription = {
+    subscription = {
       user_id: user.id,
       type: planType,
       plan_id: planId,
@@ -115,7 +115,8 @@ function onInvoicePaid(request, reply, data) {
       current_period_start_timestamp: new Date(),
       current_period_end_timestamp: subscriptionRenewal
     };
-    return request.db.insert(subscription).into('subscriptions').returning('*');
+    return request.db.insert(subscription).into('subscriptions').returning('*')
+    .then((data) => { subscription = data[0]; });
   })
   // create charge object
   .then(() => {
@@ -123,6 +124,7 @@ function onInvoicePaid(request, reply, data) {
       gateway: 'bitpay',
       transaction_id: data.invoice_id,
       user_id: user.id,
+      subscription_id: subscription.id,
       plan_id: planId,
       currency: 'USD',
       amount: data.amount,

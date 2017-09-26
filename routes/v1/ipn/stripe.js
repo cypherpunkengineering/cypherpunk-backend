@@ -17,7 +17,7 @@ module.exports = {
 
     // stripe customer id
     let customerId = payload.data.object.customer;
-    // let customerId = 'cus_BNvEMrcJOOghqW';
+    // let customerId = 'cus_BT9zhxdhm0oZrH';
     if (!customerId) { return console.log('Customer Id Not Found'); }
 
     // find user by stripe customer id
@@ -26,7 +26,7 @@ module.exports = {
     .join('subscriptions', 'stripe.id', 'subscriptions.provider_id')
     .join('users', 'subscriptions.user_id', 'users.id')
     .where({ 'stripe.customer_id': customerId })
-    .select('users.id', 'users.email', 'users.type', 'subscriptions.type')
+    .select('users.id', 'users.email', 'users.type', 'subscriptions.type', 'subscriptions.id as sub_id')
     // validate user is found
     .then((data) => {
       if (data.length) { user = data[0]; }
@@ -42,7 +42,8 @@ module.exports = {
           sendSlackNotification(request.slack, payload);
           console.log(`Unknown Stripe IPN type: ${payload.type}`);
       }
-    });
+    })
+    .catch(console.log);
   }
 };
 
@@ -94,6 +95,7 @@ function onChargeSucceeded(request, payload, user) {
     gateway: 'stripe',
     transaction_id: payload.data.object.id,
     user_id: user.id,
+    subscription_id: user.sub_id,
     plan_id: planId,
     currency: 'USD',
     amount: plan.price,
