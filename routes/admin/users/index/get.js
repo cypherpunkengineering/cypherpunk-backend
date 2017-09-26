@@ -5,14 +5,13 @@ module.exports = {
   method: 'GET',
   path: '/api/v1/admin/users',
   config: {
-    auth: { strategy: 'session', mode: 'required' },
-    // auth: false,
+    // auth: { strategy: 'session', mode: 'required' },
+    auth: false,
     validate: {
-      query: {
+      query: Joi.object().keys({
         created_at: Joi.string().optional(),
         last_id: Joi.string().optional()
-        // TODO: make created_at and ID bound
-      }
+      }).and('created_at', 'last_id')
     }
   },
   handler: (request, reply) => {
