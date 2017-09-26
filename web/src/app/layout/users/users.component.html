@@ -1,0 +1,59 @@
+<div class="page">
+  <div class="navigation">
+    <cp-nav></cp-nav>
+  </div>
+
+  <div class="content">
+    <div class="sidebar">
+      <sidebar></sidebar>
+    </div>
+
+    <div class="panel">
+      <div class="users">
+        <h2>Users</h2>
+
+        <table class="user-table">
+          <thead>
+            <tr>
+              <td>Email</td>
+              <td>Type</td>
+              <td>Confirmed</td>
+              <td>Created</td>
+              <td>Updated</td>
+              <td>View</td>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let user of userPage">
+              <td>{{ user?.email }}</td>
+              <td>{{ user?.type }}</td>
+              <td>{{ user?.confirmed }}</td>
+              <td>{{ user?.created_at | date: 'dd/MM/yyyy' }}</td>
+              <td>{{ user?.updated_at | date: 'dd/MM/yyyy' }}</td>
+              <td><button>View</button></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="pagination">
+          <div class="previous">
+            <button (click)="previous()" [disabled]="currentPage === 1">
+              Previous
+            </button>
+          </div>
+
+          <div class="pages">
+
+          </div>
+
+          <div class="next">
+            <button (click)="next()" [disabled]="!hasMore">
+              Next
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>

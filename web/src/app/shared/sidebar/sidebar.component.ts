@@ -12,7 +12,7 @@ export class SidebarComponent {
   constructor(private router: Router) {}
 
   navigate(page: string) {
-    console.log(page);
+    this.router.navigate(['/' + page])
   }
 
 }

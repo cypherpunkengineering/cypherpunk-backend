@@ -12,6 +12,17 @@ export class BackendService {
 
   // Admin functions
 
+  users(query?): Promise<any> {
+    let url = this.globals.API_URL + '/admin/users'
+    let options = new RequestOptions({
+      withCredentials: true,
+      search: query || {}
+    });
+    return this.http.get(url, options).toPromise()
+    .then(this.parseJson)
+    .catch(this.catchFunction);
+  }
+
   userCounts(): Promise<any> {
     let url = this.globals.API_URL + '/admin/users/counts';
     let options = new RequestOptions({ withCredentials: true });

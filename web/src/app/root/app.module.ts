@@ -7,6 +7,7 @@ import { BrowserModule } from '@angular/platform-browser';
 
 import { LoginModule } from '../layout/login/login.module';
 import { DashboardModule } from '../layout/dashboard/dashboard.module';
+import { UsersModule } from '../layout/users/users.module';
 
 import { AuthService } from '../services/auth.service';
 import { BackendService } from '../services/backend.service';
@@ -22,6 +23,7 @@ import { SessionService } from '../services/session.service';
     BrowserModule,
     LoginModule,
     DashboardModule,
+    UsersModule,
     AppRoutingModule
   ],
   providers: [
