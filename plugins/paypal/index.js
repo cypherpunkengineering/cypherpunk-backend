@@ -90,7 +90,7 @@ module.exports = {
           return { code: result.WEBSITECODE, action: m[1], encrypted: m[2] };
         }
       }
-      throw new Error("Invalid PayPal button");
+      throw Object.assign(new Error("Invalid PayPal button: " + result.ACK), { result });
     });
   },
 
