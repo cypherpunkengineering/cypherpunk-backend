@@ -4,8 +4,7 @@ module.exports = [
   require('./admin/users/index/get'),
   require('./admin/users/get'),
   require('./admin/home'),
-  require('./admin/smoke'),
-  // v1 routes
+  // v1 route
   require('./v1/account/logout'),
   require('./v1/account/status'),
   require('./v1/account/authenticate/userpasswd'),
