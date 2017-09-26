@@ -30,7 +30,7 @@
               <td>{{ user?.confirmed }}</td>
               <td>{{ user?.created_at | date: 'dd/MM/yyyy' }}</td>
               <td>{{ user?.updated_at | date: 'dd/MM/yyyy' }}</td>
-              <td><button>View</button></td>
+              <td><button [routerLink]="['/users', user.id]">View</button></td>
             </tr>
           </tbody>
         </table>

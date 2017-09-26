@@ -12,6 +12,16 @@ export class BackendService {
 
   // Admin functions
 
+  user(id): Promise<any> {
+    let url = this.globals.API_URL + '/admin/users/' + id;
+    let options = new RequestOptions({
+      withCredentials: true
+    });
+    return this.http.get(url, options).toPromise()
+    .then(this.parseJson)
+    .catch(this.catchFunction);
+  }
+
   users(query?): Promise<any> {
     let url = this.globals.API_URL + '/admin/users'
     let options = new RequestOptions({

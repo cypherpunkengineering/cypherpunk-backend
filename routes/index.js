@@ -2,6 +2,7 @@ module.exports = [
   // admin routes
   require('./admin/users/counts/get'),
   require('./admin/users/index/get'),
+  require('./admin/users/get'),
   require('./admin/home'),
   require('./admin/smoke'),
   // v1 routes

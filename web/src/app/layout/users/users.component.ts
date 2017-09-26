@@ -55,5 +55,4 @@ export class UsersComponent {
       this.userPages[this.currentPage] = data.users;
     });
   }
-
 }

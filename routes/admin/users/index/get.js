@@ -5,8 +5,8 @@ module.exports = {
   method: 'GET',
   path: '/api/v1/admin/users',
   config: {
-    // auth: { strategy: 'session', mode: 'required' },
-    auth: false,
+    auth: { strategy: 'session', mode: 'required' },
+    // auth: false,
     validate: {
       query: Joi.object().keys({
         created_at: Joi.string().optional(),

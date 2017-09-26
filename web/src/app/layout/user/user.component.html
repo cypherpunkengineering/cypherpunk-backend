@@ -1,0 +1,90 @@
+<div class="page">
+  <div class="navigation">
+    <cp-nav></cp-nav>
+  </div>
+
+  <div class="content">
+    <div class="sidebar">
+      <sidebar></sidebar>
+    </div>
+
+    <div class="panel">
+      <div class="users">
+        <h2>{{ user?.email }}</h2>
+
+        <div class="account-info">
+          <h3>Account Info:</h3>
+
+          <div class="row">
+            <div class="heading">Account Type:</div>
+            <div class="data">{{ user?.type }}</div>
+          </div>
+
+          <div class="row">
+            <div class="heading">Confirmed: </div>
+            <div class="data">{{ user?.confirmed }}</div>
+          </div>
+
+          <div class="row">
+            <div class="heading">Account Created: </div>
+            <div class="data">{{ user?.created_at | date: 'dd/MM/yyyy' }}</div>
+          </div>
+
+          <div class="row">
+            <div class="heading">Account Last Updated: </div>
+            <div class="data">{{ user?.updated_at | date: 'dd/MM/yyyy' }}</div>
+          </div>
+
+          <div class="row">
+            <div class="heading">Account Last Logged In: </div>
+            <div class="data">{{ user?.last_login | date: 'dd/MM/yyyy'}}</div>
+          </div>
+        </div>
+
+        <div class="subscriptions">
+          <h3>Subscriptions:</h3>
+
+          <section class="empty" *ngIf="user?.subscriptions?.length === 0">
+            No Subscriptions Found
+          </section>
+
+          <section class="found" *ngIf="user?.subscriptions?.length">
+            <table class="sub-table">
+              <thead>
+                <tr>
+                  <td>ID</td>
+                  <td>Type</td>
+                  <td>Plan Id</td>
+                  <td>Provider</td>
+                  <td>Active</td>
+                  <td>Current</td>
+                  <td>Created</td>
+                  <td>Updated</td>
+                  <td>Renewal</td>
+                  <td>Expiration</td>
+                  <td>Cancelled</td>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let sub of user?.subscriptions">
+                  <td>{{ sub.id }}</td>
+                  <td>{{ sub.type }}</td>
+                  <td>{{ sub.plan_id }}</td>
+                  <td>{{ sub.provider }}</td>
+                  <td>{{ sub.active }}</td>
+                  <td>{{ sub.current }}</td>
+                  <td>{{ sub.created_at | date: 'dd/MM/yyyy' }}</td>
+                  <td>{{ sub.updated_at | date: 'dd/MM/yyyy' }}</td>
+                  <td>{{ sub.renewal_timestamp | date: 'dd/MM/yyyy' }}</td>
+                  <td>{{ sub.expiration_timestamp | date: 'dd/MM/yyyy' }}</td>
+                  <td>{{ sub.cancellation_timestamp | date: 'dd/MM/yyyy' }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </section>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>

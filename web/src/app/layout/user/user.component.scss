@@ -1,0 +1,72 @@
+.page {
+  display: flex;
+  flex-flow: column;
+  height: 100%;
+
+  .navigation { flex: 0 1 auto; }
+
+  .content {
+    display: flex;
+    flex: 1 1 auto;
+
+    .sidebar, .panel { display: flex; }
+
+    .panel {
+      flex: 1 1 auto;
+      padding: 20px;
+      background-color: #eee;
+      overflow: auto;
+    }
+  }
+}
+
+.users {
+  display: block;
+  width: 100%;
+  h2 { margin-top: 0; }
+}
+
+.account-info {
+  margin-top: 30px;
+  .row {
+    overflow: auto;
+    padding: 10px;
+    font-size: 18px;
+
+    .heading {
+      float: left;
+    }
+
+    .data {
+      float: right;
+    }
+  }
+}
+
+.subscriptions {
+  margin-top: 30px;
+  .empty { text-align: center; }
+
+  .found {
+    padding: 10px;
+    .sub-table {
+      width: 100%;
+      thead { font-weight: bold; margin-bottom: 10px; }
+      tbody { font-size: 14px; }
+      tbody tr { padding: 10px 0; }
+      th, td { border-bottom: 1px solid #ddd; padding: 10px 0; }
+      button { padding: 5px; }
+    }
+  }
+}
+
+button {
+  border: 0;
+  background-color: #0d1e26;
+  padding: 10px;
+  border-radius: 5px;
+  cursor: pointer;
+  color: #fff;
+}
+button:hover { background-color: #163138; }
+button:disabled { background-color: #ddd; color: #000; }
