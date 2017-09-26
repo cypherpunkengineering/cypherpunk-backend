@@ -28,7 +28,7 @@ module.exports = {
   // Creates an encrypted button for a subscription with the requested properties, resolving to
   // an object with the required code to send the user to a PayPal checkout for the subscription.
   //
-  // Returns: {
+  // Resolves to: {
   //   code: raw html code for a button form (shouldn't be used directly)
   //   action: the URL for the <form action> attribute
   //   encrypted: the encrypted descriptor to go in a <input type="hidden" name="encrypted"> tag
@@ -58,7 +58,7 @@ module.exports = {
       if (delay > 90) { delayParameters = { a1: '0', p1: Math.floor(delay / 7).toFixed(), t1: 'W' }; }
       else if (delay > 0) { delayParameters = { a1: '0', p1: delay.toFixed(), t1: 'D' }; }
     })
-    .then(() => pp.request('BMCreateButton', Object.assign({
+    .then(() => paypal.request('BMCreateButton', Object.assign({
       BUTTONCODE: 'ENCRYPTED',
       BUTTONTYPE: 'SUBSCRIBE',
       BUTTONSUBTYPE: 'SERVICES',
@@ -94,10 +94,17 @@ module.exports = {
     });
   },
 
-  // Cancels a subscription with the given PayPal ID.
+  // Cancels a subscription with the given PayPal subscription ID.
+  // Resolves to nothing on success, rejects with an Error on failure.
   //
-  cancelSubscription() {
-
+  cancelSubscription(id) {
+    return paypal.request('ManageRecurringPaymentsProfileStatus', {
+      PROFILEID: id,
+      ACTION: 'Cancel'
+    })
+    .then(result => {
+      if (result.ACK !== 'Success') throw Object.assign(new Error("Unable to cancel PayPal subscription: " + result.ACK), { result });
+    });
   },
 
   // Validates an IPN by passing the notification back to PayPal's servers, resolves
