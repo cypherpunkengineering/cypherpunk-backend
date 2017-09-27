@@ -144,6 +144,7 @@ function teaserShare(args) {
   .then(() => { console.log('Sent invitation confirmation email to: ' + args.to); });
 }
 
+
 /**
  * args: {
  *   to: string, (user's email)
@@ -171,7 +172,30 @@ function migration(args) {
 }
 
 
-// TODO: add mass mailer functions here
+/**
+ * args: {
+ *   to: string, (user's email)
+ *   subject: string, (email subject)
+ *   substitutions: {
+ *     titleText: string, (email title text)
+ *     regularText: string, (email regular text)
+ *   }
+ * }
+ */
+function massCom(args) {
+  return mailer.mail({
+    to: args.to,
+    from: {
+      name: 'Cypherpunk Privacy',
+      email: 'hello@cypherpunk.com'
+    },
+    subject: args.subject,
+    templateId: templates.simple,
+    substitutions: args.substitutions
+  })
+  .then(() => { console.log('Sent Mass Communication email to: ' + args.to); });
+}
+
 
 /** Utility Functions **/
 
@@ -217,5 +241,6 @@ module.exports = {
   changeEmail: changeEmail,
   purchase: purchase,
   teaserShare: teaserShare,
-  migration: migration
+  migration: migration,
+  massCom: massCom
 };

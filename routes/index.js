@@ -3,6 +3,7 @@ module.exports = [
   require('./admin/users/counts/get'),
   require('./admin/users/index/get'),
   require('./admin/users/get'),
+  require('./admin/communication/post'),
   require('./admin/home'),
   // v1 route
   require('./v1/account/logout'),

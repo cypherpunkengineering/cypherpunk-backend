@@ -1,0 +1,65 @@
+<div class="page">
+  <div class="navigation">
+    <cp-nav></cp-nav>
+  </div>
+
+  <div class="content">
+    <div class="sidebar">
+      <sidebar></sidebar>
+    </div>
+
+    <div class="panel">
+      <div class="communication">
+        <h2>Mass Communication</h2>
+        <h4>Compose an email to send to all users</h4>
+
+        <section class="group">
+          <label for="group">User Group: </label>
+          <select name="group" id="group" [(ngModel)]="group">
+            <option value="ed">Ed</option>
+            <option value="dev" selected>Developers</option>
+            <option value="confirmed">Confirmed Users</option>
+            <option value="unconfirmed">Unconfirmed Users</option>
+            <option value="all">All Users</option>
+          </select>
+        </section>
+
+        <section class="subject">
+          <label for="subject">Email Subject: </label>
+          <input name="subject" type="text" placeholder="Hello Friends" [(ngModel)]="subject">
+        </section>
+
+        <section class="title">
+          <label for="title">Email Title Section: </label>
+          <input name="title" type="text" placeholder="We have an annoucement" [(ngModel)]="titleText">
+        </section>
+
+        <section class="regular">
+          <label for="regular">Email Text Section: </label>
+          <br>
+          <textarea name="regular" id="regular" cols="30" rows="10" [(ngModel)]="regularText"></textarea>
+        </section>
+
+        <section class="bottom">
+          <button (click)="confirmSend()">Send Email</button>
+        </section>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal" [ngClass]="{'open': show}">
+  <div class="background" (click)="show = false" [ngClass]="{'open': show}"></div>
+  <div class="content">
+    <div class="modal-content" [ngClass]="{'open': show}">
+      <div class="modal-header">
+        Are you sure you want to send this email?
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn teal" (click)="sendMassCommunication()">Yes</button>
+        <button class="btn teal" (click)="show = false">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>

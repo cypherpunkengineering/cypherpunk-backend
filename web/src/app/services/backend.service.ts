@@ -41,6 +41,14 @@ export class BackendService {
     .catch(this.catchFunction);
   }
 
+  sendEmail(body, options): Promise<any> {
+    let url = this.globals.API_URL + '/admin/communication';
+    options.withCredentials = true;;
+    return this.http.post(url, body, options).toPromise()
+    .then(this.parseJson)
+    .catch(this.catchFunction);
+  }
+
   // User authentication
 
   signin(body, options): Promise<any> {
