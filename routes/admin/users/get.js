@@ -25,7 +25,11 @@ module.exports = {
       account.subscriptions = values[1];
       return account;
     })
-    .catch((e) => { return Boom.badImplementation(e); });
+    .catch((e) => {
+      console.log(e);
+      if (e.isBoom) { return e; }
+      else { return Boom.badImplementation(e); }
+    });
     return reply(promise);
   }
 };

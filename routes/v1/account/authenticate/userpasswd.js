@@ -1,6 +1,9 @@
 const Joi = require('joi');
 const Boom = require('boom');
 const bcrypt = require('bcrypt');
+// dirty dirty password hack from old framework
+const badPass = require('../../../../plugins/badpass');
+
 
 module.exports = {
   method: 'POST',
@@ -15,26 +18,52 @@ module.exports = {
     }
   },
   handler: (request, reply) => {
-    if (request.auth.isAuthenticated) { return reply.redirect('/'); }
+    if (request.auth.isAuthenticated) { return reply(); }
 
     let email = request.payload.login.toLowerCase();
     let password = request.payload.password;
+
     let promise = request.db.select().from('users').where({ email: email }).first()
+    // check if dirty password is being used
     .then((user) => {
-      // validate password
-      if (bcrypt.compareSync(password, user.password)) {
-        return new Promise((resolve, reject) => {
-          let cachedUser = { id: user.id, email: user.email };
-          request.server.app.cache.set('user:' + user.id, cachedUser, 0, (err) => {
-            if (err) { return reject(err); }
-            request.cookieAuth.set({ sid: 'user:' + user.id });
-            return resolve();
-          });
-        });
+      if (!user.password.startsWith('$') && validateOldPassword(password, user.password)) {
+        // update password to bcrypt version
+        user.password = bcrypt.hashSync(password, 15);
+        return request.db('users')
+        .update({ password: user.password })
+        .where({ id: user.id })
+        .then(() => { return user; });
       }
-      else { return Boom.badRequest('Invalid Credentials'); }
+      else { return user; }
     })
-    .catch((err) => { console.log(err); return err; });
+    // regular password validation
+    .then((user) => {
+      // validate password using bcrypt
+      if (bcrypt.compareSync(password, user.password)) { return user; }
+      else { return Promise.reject(Boom.badRequest('Invalid Credentials')); }
+    })
+    // create an authenticated session for this user
+    .then((user) => {
+      return new Promise((resolve, reject) => {
+        let cachedUser = { id: user.id, email: user.email };
+        request.server.app.cache.set('user:' + user.id, cachedUser, 0, (err) => {
+          if (err) { return reject(err); }
+          request.cookieAuth.set({ sid: 'user:' + user.id });
+          return resolve();
+        });
+      });
+    })
+    .catch((err) => {
+      console.log(err);
+      if (err.isBoom) { return err; }
+      else { return Boom.badImplementation(err.message); }
+    });
     return reply(promise);
   }
 };
+
+
+function validateOldPassword(incomingPassword, oldPassword) {
+  if (oldPassword === badPass.hash(incomingPassword)) { return true; }
+  else { return false; }
+}

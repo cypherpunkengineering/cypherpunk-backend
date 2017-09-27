@@ -30,7 +30,11 @@ module.exports = {
     let newPassword = bcrypt.hashSync(request.payload.passwordNew, 15);
     let promise = request.db('users').update({ password: newPassword }).where({ id : user.id })
     .then(() => { return; }) // return only status 200
-    .catch((err) => { return Boom.badImplementation(err); });
+    .catch((err) => {
+      console.log(err);
+      if (err.isBoom) { return err; }
+      else { return Boom.badImplementation(err); }
+    });
     return reply(promise);
   }
 };

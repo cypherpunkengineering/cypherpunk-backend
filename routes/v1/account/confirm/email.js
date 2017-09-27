@@ -42,7 +42,11 @@ module.exports = {
     .then(() => { return updateConfirmedCount(request.db); })
     // print count to slack
     .then(() => { request.slack.count(); }) // TODO catch and print?
-    .catch((err) => { return Boom.badImplementation(err); });
+    .catch((err) => {
+      console.log(err);
+      if (err.isBoom) { return err; }
+      else { return Boom.badImplementation(err); }
+    });
     return reply(promise);
   }
 };

@@ -159,6 +159,7 @@ function portUser(user) {
   // create new user
   let newUser = {
     email: user.data.email.toLowerCase(),
+    password: user.data.password,
     type: user.type,
     priority: 1,
     confirmed: user.data.confirmed,

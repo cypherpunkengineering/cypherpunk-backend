@@ -65,7 +65,11 @@ module.exports = {
         }
       };
     })
-    .catch((err) => { return Boom.badImplementation(err); });
+    .catch((err) => {
+      console.log(err);
+      if (err.isBoom) { return err; }
+      else { return Boom.badImplementation(err); }
+    });
 
     return reply(promise);
   }

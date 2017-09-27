@@ -8,11 +8,12 @@ module.exports = {
     let promise = request.db.select('id').from('users').limit(1)
     .then((data) => {
       if (data.length) { return { status: 'ok' }; }
-      else { return Boom.badImplementation({ status: 'fail' }); }
+      else { return Promise.reject(Boom.badImplementation({ status: 'fail' })); }
     })
     .catch((e) => {
       console.log(e);
-      return Boom.badImplementation({ status: 'fail' });
+      if (e.isBoom) { return e; }
+      else { return Boom.badImplementation({ status: 'fail' }); }
     });
 
     return reply(promise);
