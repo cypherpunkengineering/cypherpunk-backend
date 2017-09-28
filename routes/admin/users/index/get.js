@@ -12,7 +12,8 @@ module.exports = {
         created_at: Joi.string().optional(),
         last_id: Joi.string().optional()
       }).and('created_at', 'last_id')
-    }
+    },
+    pre: [ { method: 'isAuthorized' } ]
   },
   handler: (request, reply) => {
     let start = request.query.created_at || 0;

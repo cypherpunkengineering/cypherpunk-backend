@@ -14,7 +14,8 @@ module.exports = {
         titleText: Joi.string().required(),
         regularText: Joi.string().required()
       }
-    }
+    },
+    pre: [ { method: 'isAuthorized' } ]
   },
   handler: (request, reply) => {
     let promise;

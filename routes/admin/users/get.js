@@ -9,7 +9,8 @@ module.exports = {
     // auth: false,
     validate: {
       params: { id: Joi.string().optional() }
-    }
+    },
+    pre: [ { method: 'isAuthorized' } ]
   },
   handler: (request, reply) => {
     let userId = request.params.id;

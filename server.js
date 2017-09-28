@@ -24,6 +24,7 @@ const stripe = require('./plugins/stripe');
 const paypal = require('./plugins/paypal');
 const amazon = require('./plugins/amazon');
 const radius = require('./plugins/radius');
+const authorization = require('./plugins/authorization');
 
 // bootstrap server with redis as a cache
 const server = module.exports = new Hapi.Server({ cache: [{
@@ -63,6 +64,8 @@ server.register(Inert)
 .then(() => { server.app.cache = server.cache({ segment: 'sessions', expiresIn: 2147483647 }); })
 // auth strategy
 .then(() => { return server.register({ register: Auth }).then(() => { authOptions(server); }); })
+// server methods
+.then(() => { server.method('isAuthorized', authorization.isAuthorized); })
 // routes (must come after inert)
 .then(() => { return server.route(routes); })
 // start server

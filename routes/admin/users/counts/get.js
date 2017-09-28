@@ -4,8 +4,9 @@ module.exports = {
   method: 'GET',
   path: '/api/v1/admin/users/counts',
   config: {
-    auth: { strategy: 'session', mode: 'required' }
+    auth: { strategy: 'session', mode: 'required' },
     // auth: false
+    pre: [ { method: 'isAuthorized' } ]
   },
   handler: (request, reply) => {
     let promises = [
