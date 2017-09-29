@@ -18,7 +18,6 @@ module.exports = {
     })
     .where({ id: userId })
     .returning(['id', 'email', 'recovery_token'])
-    .tap(console.log)
     .then((user) => {
       let msg = { to: user.email, id: user.id, recoveryToken: user.recovery_token };
       return request.mailer.recovery(msg);

@@ -58,6 +58,20 @@
       button { padding: 5px; }
     }
   }
+
+  .charge {
+    margin: auto;
+    display: table;
+
+    .charge-row {
+      display: table-row;
+    }
+
+    .charge-cell {
+      display: table-cell;
+      padding: 0 15px;
+    }
+  }
 }
 
 .account-controls {

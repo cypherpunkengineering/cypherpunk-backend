@@ -8,6 +8,7 @@ import { BackendService } from '../../services/backend.service';
 })
 export class UserComponent {
   user: any;
+  now = new Date();
 
   constructor(private route: ActivatedRoute, private backend: BackendService) {
     this.route.params.subscribe(params => {
@@ -17,11 +18,8 @@ export class UserComponent {
 
   resetPassword() {
     return this.backend.adminReset(this.user.id, {})
-    .then((data) => {
-      console.log(data);
-    });
+    .then((data) => { alert('Reset Password Email Sent!'); });
   }
-
 
   getUser(id) {
     return this.backend.user(id)

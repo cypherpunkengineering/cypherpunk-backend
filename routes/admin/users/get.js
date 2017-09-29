@@ -17,7 +17,7 @@ module.exports = {
 
     let promises = [
       getUserAccountInfo(request.db, userId),
-      getUserSubscrptions(request.db, userId)
+      getUserSubscriptions(request.db, userId)
     ];
 
     let promise = Promise.all(promises)
@@ -55,26 +55,44 @@ function getUserAccountInfo(db, userId) {
   });
 }
 
-function getUserSubscrptions(db, userId) {
-  let columns = [
-    'id',
-    'type',
-    'plan_id',
-    'provider',
-    'active',
-    'current',
-    'created_at',
-    'updated_at',
-    'start_timestamp',
-    'purchase_timestamp',
-    'renewal_timestamp',
-    'expiration_timestamp',
-    'cancellation_timestamp',
-    'current_period_start_timestamp',
-    'current_period_end_timestamp'
-  ];
-  return db
-  .select(columns)
-  .from('subscriptions')
-  .where({ user_id: userId });
+function getUserSubscriptions(db, userId) {
+  return db.raw(`
+    SELECT
+      s.id,
+      s.type,
+      s.plan_id,
+      s.provider,
+      s.active,
+      s.current,
+      s.created_at,
+      s.updated_at,
+      s.start_timestamp,
+      s.purchase_timestamp,
+      s.renewal_timestamp,
+      s.expiration_timestamp,
+      s.cancellation_timestamp,
+      s.current_period_start_timestamp,
+      s.current_period_end_timestamp,
+      (
+        SELECT array_to_json(array_agg(row_to_json(r)))
+        FROM (
+          SELECT
+            id,
+            created_at,
+            gateway,
+            transaction_id,
+            plan_id,
+            currency,
+            amount,
+            refunded,
+            refund_amount,
+            refund_date
+          FROM charges c
+          WHERE c.subscription_id = s.id
+        ) r
+      ) as charges
+    FROM subscriptions s
+    WHERE s.user_id = ?
+  `, [userId])
+  .then((response) => { return response.rows; });
 }

@@ -52,33 +52,66 @@
             <table class="sub-table">
               <thead>
                 <tr>
-                  <td>ID</td>
                   <td>Type</td>
                   <td>Plan Id</td>
                   <td>Provider</td>
                   <td>Active</td>
                   <td>Current</td>
                   <td>Created</td>
-                  <td>Updated</td>
                   <td>Renewal</td>
-                  <td>Expiration</td>
+                  <td>Expired</td>
                   <td>Cancelled</td>
+                  <td>View Charges</td>
                 </tr>
               </thead>
               <tbody>
-                <tr *ngFor="let sub of user?.subscriptions">
-                  <td>{{ sub.id }}</td>
-                  <td>{{ sub.type }}</td>
-                  <td>{{ sub.plan_id }}</td>
-                  <td>{{ sub.provider }}</td>
-                  <td>{{ sub.active }}</td>
-                  <td>{{ sub.current }}</td>
-                  <td>{{ sub.created_at | date: 'dd/MM/yyyy' }}</td>
-                  <td>{{ sub.updated_at | date: 'dd/MM/yyyy' }}</td>
-                  <td>{{ sub.renewal_timestamp | date: 'dd/MM/yyyy' }}</td>
-                  <td>{{ sub.expiration_timestamp | date: 'dd/MM/yyyy' }}</td>
-                  <td>{{ sub.cancellation_timestamp | date: 'dd/MM/yyyy' }}</td>
-                </tr>
+                <ng-container *ngFor="let sub of user?.subscriptions">
+                  <tr>
+                    <td>{{ sub.type }}</td>
+                    <td>{{ sub.plan_id }}</td>
+                    <td>{{ sub.provider }}</td>
+                    <td>{{ sub.active }}</td>
+                    <td>{{ sub.current }}</td>
+                    <td>{{ sub.created_at | date: 'dd/MM/yyyy' }}</td>
+                    <td>{{ !!sub.renewal }}</td>
+                    <td>{{ sub.expired < now }}</td>
+                    <td>{{ !!sub.cancelled }}</td>
+                    <td><button (click)="sub.showCharges = !sub.showCharges">View</button></td>
+                  </tr>
+                  <ng-container *ngFor="let charge of sub.charges">
+                    <tr *ngIf="sub.showCharges">
+                      <td colspan="10">
+                        <div class="charge">
+                          <div class="charge-row">
+                            <div class="charge-cell">
+                              <strong>Amount: </strong>
+                              {{ charge.amount }}
+                            </div>
+
+                            <div class="charge-cell">
+                              <strong>Created: </strong>
+                              {{ charge.created_at | date: 'dd/MM/yyyy' }}
+                            </div>
+
+                            <div class="charge-cell">
+                              <strong>Transaction ID: </strong>
+                              {{ charge.transaction_id }}
+                            </div>
+
+                            <div class="charge-cell">
+                              <strong>Refunded: </strong>
+                              {{ charge.refunded }}
+                            </div>
+
+                            <div class="charge-cell">
+                              <button>Refund</button>
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  </ng-container>
+                </ng-container>
               </tbody>
             </table>
           </section>

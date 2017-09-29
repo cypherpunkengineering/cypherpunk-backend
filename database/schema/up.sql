@@ -156,7 +156,7 @@ CREATE TABLE charges (
   created_at timestamp with time zone NOT NULL DEFAULT now(),
   updated_at timestamp with time zone NOT NULL DEFAULT now(),
   gateway character varying(255) NOT NULL,
-  transaction_id character varying(255),
+  transaction_id character varying(255) NOT NULL,
   plan_id character varying(255) NOT NULL,
   currency character varying(255) NOT NULL,
   amount money NOT NULL,
@@ -165,6 +165,12 @@ CREATE TABLE charges (
   refund_date timestamp with time zone,
   data json NOT NULL
 );
+
+CREATE INDEX ON charges (user_id);
+CREATE INDEX ON charges (subscription_id);
+CREATE INDEX ON charges (transaction_id);
+CREATE INDEX ON charges (created_at);
+CREATE INDEX ON charges (gateway);
 
 
 -- BillingPackage
