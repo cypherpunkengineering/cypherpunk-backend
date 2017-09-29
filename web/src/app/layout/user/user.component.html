@@ -78,8 +78,9 @@
                     <td>{{ !!sub.cancelled }}</td>
                     <td><button (click)="sub.showCharges = !sub.showCharges">View</button></td>
                   </tr>
+
                   <ng-container *ngFor="let charge of sub.charges">
-                    <tr *ngIf="sub.showCharges">
+                    <tr class="charges" *ngIf="sub.showCharges">
                       <td colspan="10">
                         <div class="charge">
                           <div class="charge-row">
