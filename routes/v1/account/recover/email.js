@@ -30,7 +30,7 @@ module.exports = {
     // notify slack of new confirmation
     .then(() => {
       let text = `[RECOVER] User ${user.email} has requested account recovery by email :love_letter:`;
-      request.slack.billing(text); // TODO catch and print?
+      request.slack.billing(text);
     })
     .catch((err) => { return Boom.badImplementation(err); });
     return reply(promise);

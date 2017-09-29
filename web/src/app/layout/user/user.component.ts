@@ -15,6 +15,14 @@ export class UserComponent {
     });
   }
 
+  resetPassword() {
+    return this.backend.adminReset(this.user.id, {})
+    .then((data) => {
+      console.log(data);
+    });
+  }
+
+
   getUser(id) {
     return this.backend.user(id)
     .then((data) => { this.user = data; });

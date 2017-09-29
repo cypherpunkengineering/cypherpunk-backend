@@ -49,6 +49,14 @@ export class BackendService {
     .catch(this.catchFunction);
   }
 
+  adminReset(userId, options): Promise<any> {
+    let url = this.globals.API_URL + `/admin/users/${userId}/reset`;
+    options.withCredentials = true;;
+    return this.http.post(url, {}, options).toPromise()
+    .then(this.parseJson)
+    .catch(this.catchFunction);
+  }
+
   // User authentication
 
   signin(body, options): Promise<any> {
