@@ -1,0 +1,58 @@
+<div class="page">
+  <div class="navigation">
+    <cp-nav></cp-nav>
+  </div>
+
+  <div class="content">
+    <div class="sidebar">
+      <sidebar></sidebar>
+    </div>
+
+    <div class="panel">
+      <div class="search">
+        <h2>Search</h2>
+
+        <div class="search-container">
+          <div class="search-selector">
+            <select name="search-select" id="search-select" [(ngModel)]="searchSelection" (change)="clear()">
+              <option value="email">Email</option>
+              <option value="transaction_id">Transaction ID</option>
+            </select>
+          </div>
+
+          <div class="search-label">
+            <label for="trans_search" *ngIf="searchSelection === 'email'">
+              Enter an Email to search with:
+            </label>
+            <label for="trans_search" *ngIf="searchSelection === 'transaction_id'">
+              Enter a Transaction ID to search with:
+            </label>
+
+          </div>
+          <div class="search-input">
+            <input type="text" name="trans_search" id="trans_search" [(ngModel)]="searchTerm" (keydown.enter)="getTransactions()">
+            <button (click)="getTransactions()">Search</button>
+          </div>
+        </div>
+
+        <table class="user-table" *ngIf="searchResults.length">
+          <thead>
+            <tr>
+              <td>User</td>
+              <td>Trans. Id</td>
+              <td>View User</td>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let result of searchResults">
+              <td>{{ result?.email }}</td>
+              <td>{{ result?.transaction_id }}</td>
+              <td><button [routerLink]="['/users', result.user_id]">View</button></td>
+            </tr>
+          </tbody>
+        </table>
+
+      </div>
+    </div>
+  </div>
+</div>

@@ -57,6 +57,17 @@ export class BackendService {
     .catch(this.catchFunction);
   }
 
+  userSearch(query?): Promise<any> {
+    let url = this.globals.API_URL + '/admin/search'
+    let options = new RequestOptions({
+      withCredentials: true,
+      search: query || {}
+    });
+    return this.http.get(url, options).toPromise()
+    .then(this.parseJson)
+    .catch(this.catchFunction);
+  }
+
   // User authentication
 
   signin(body, options): Promise<any> {

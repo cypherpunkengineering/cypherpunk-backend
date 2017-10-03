@@ -10,6 +10,7 @@ import { DashboardModule } from '../layout/dashboard/dashboard.module';
 import { UsersModule } from '../layout/users/users.module';
 import { UserModule } from '../layout/user/user.module';
 import { CommunicationModule } from '../layout/communication/communication.module';
+import { SearchModule } from '../layout/search/search.module';
 
 import { AuthService } from '../services/auth.service';
 import { BackendService } from '../services/backend.service';
@@ -28,6 +29,7 @@ import { SessionService } from '../services/session.service';
     UsersModule,
     UserModule,
     CommunicationModule,
+    SearchModule,
     AppRoutingModule
   ],
   providers: [
