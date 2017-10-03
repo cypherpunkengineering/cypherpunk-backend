@@ -9,7 +9,8 @@ CREATE TABLE users (
   -- trial, pending, invitation, expired, free, premium, elite, staff, developer
   type character varying(255) NOT NULL,
   priority integer NOT NULL, -- 1, 2, 3
-  confirmed boolean NOT NULL,
+  confirmed boolean NOT NULL DEFAULT false,
+  deactivated boolean NOT NULL DEFAULT false,
   created_at timestamp with time zone NOT NULL DEFAULT now(),
   updated_at timestamp with time zone NOT NULL DEFAULT now(),
   last_login timestamp with time zone NOT NULL DEFAULT now(),
@@ -23,6 +24,7 @@ CREATE TABLE users (
 CREATE INDEX ON users (type);
 CREATE INDEX ON users (confirmed);
 CREATE INDEX ON users (created_at);
+CREATE INDEX ON users (deactivated);
 
 
 -- user counters

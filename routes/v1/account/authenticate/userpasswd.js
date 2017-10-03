@@ -23,7 +23,11 @@ module.exports = {
     let email = request.payload.login.toLowerCase();
     let password = request.payload.password;
 
-    let promise = request.db.select().from('users').where({ email: email }).first()
+    let promise = request.db
+    .select()
+    .from('users')
+    .where({ email: email, deactivated: false })
+    .first()
     // check if dirty password is being used
     .then((user) => {
       if (!user.password.startsWith('$') && validateOldPassword(password, user.password)) {
@@ -44,6 +48,7 @@ module.exports = {
     })
     // create an authenticated session for this user
     .then((user) => {
+      console.log(user);
       return new Promise((resolve, reject) => {
         let cachedUser = { id: user.id, email: user.email, type: user.type };
         request.server.app.cache.set('user:' + user.id, cachedUser, 0, (err) => {

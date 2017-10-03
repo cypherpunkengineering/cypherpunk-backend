@@ -11,6 +11,7 @@ module.exports = {
   handler: (request, reply) => {
     let promises = [
       trialUsers(request),
+      inactiveTrialUsers(request),
       confirmedTrials(request),
       unconfirmedTrials(request),
       premiumUsers(request),
@@ -26,18 +27,19 @@ module.exports = {
       return {
         trial: {
           total: counts[0],
-          confirmed: counts[1],
-          unconfirmed: counts[2]
+          inactive: counts[1],
+          confirmed: counts[2],
+          unconfirmed: counts[3]
         },
         premium: {
-          total: counts[3],
-          active: counts[4],
-          cancelled: counts[5],
-          inactive: counts[6],
+          total: counts[4],
+          active: counts[5],
+          cancelled: counts[6],
+          inactive: counts[7],
         },
         total: {
-          registered: counts[7],
-          confirmed: counts[8]
+          registered: counts[8],
+          confirmed: counts[9]
         }
       };
     })
@@ -56,6 +58,7 @@ function trialUsers(request) {
   return request.db('users')
   .count('type')
   .whereIn('type', ['trial', 'pending', 'invitation', 'free'])
+  .where({ deactivated: false })
   .then(scalar);
 }
 
@@ -105,6 +108,14 @@ function activeCancelledUsers(request) {
     .orWhereNotNull('subscriptions.renewal_timestamp');
   })
   .count('users.type')
+  .then(scalar);
+}
+
+function inactiveTrialUsers(request) {
+  return request.db('users')
+  .count('type')
+  .whereIn('type', ['trial', 'pending', 'invitation', 'free'])
+  .where({ deactivated: true })
   .then(scalar);
 }
 
