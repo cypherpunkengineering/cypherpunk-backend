@@ -13,6 +13,10 @@ export class GlobalsService {
   private stagingAPI = 'https://api.cypherpunk.engineering';
   private prodAPI = 'https://api.cypherpunk.com';
 
+  private devServers = [
+    '185.80.220.41'
+  ];
+
   constructor(@Inject(PLATFORM_ID) private platformId: Object) {
     let browser_env = isPlatformBrowser(platformId);
 
@@ -28,7 +32,8 @@ export class GlobalsService {
     // Detect BACKEND_HOST to use
     if (browser_env) {
       let hostname = document.location.hostname;
-      if (hostname.startsWith('localhost')) { this.BACKEND_HOST = this.devAPI; }
+      if (this.devServers.includes(hostname)) { this.BACKEND_HOST = this.devAPI; }
+      else if (hostname.startsWith('localhost')) { this.BACKEND_HOST = this.devAPI; }
       else if (hostname.startsWith('test.cypherpunk')) { this.BACKEND_HOST = this.testAPI; }
       else if (hostname.startsWith('cypherpunk.engineering')) { this.BACKEND_HOST = this.stagingAPI; }
       else { this.BACKEND_HOST = this.prodAPI; }
