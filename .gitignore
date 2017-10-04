@@ -7,3 +7,8 @@ configs/paypal.js
 configs/mongo.js
 .DS_Store
 ._.DS_Store
+public/static/*.txt
+public/static/*.ico
+public/static/*.html
+public/static/*.js
+public/static/*.css

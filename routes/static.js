@@ -1,12 +1,13 @@
+const path = require('path');
+
 module.exports = {
   method: 'GET',
-  path: '/{param*}',
+  path: '/static/{param*}',
   config: { auth: false },
   handler: {
     directory: {
-      path: 'public',
-      index: true,
-      listing: true
+      path: path.join(__dirname, '..', 'public', 'static'),
+      index: true
     }
   }
 };

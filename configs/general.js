@@ -21,7 +21,7 @@ switch (env) {
 
 var host = process.env.HOST || 'localhost';
 var address = process.env.ADDRESS || (env === 'DEV' ? '127.0.0.1' : '0.0.0.0');
-var port = process.env.PORT || 9000;
+var port = process.env.PORT || 11080;
 
 var tls = undefined;
 try {

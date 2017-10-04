@@ -1,3 +1,4 @@
+./node_modules/@angular/cli/bin/ng build --prod --deploy-url "/static/"
 pm2 stop all
 pm2 delete all
 pm2 start server.js -i max

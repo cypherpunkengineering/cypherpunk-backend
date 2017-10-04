@@ -1,5 +1,4 @@
-import { Router, NavigationEnd } from '@angular/router';
-import { Component, HostListener } from '@angular/core';
+import { Component } from '@angular/core';
 import { AuthService } from '../../services/auth.service';
 
 @Component({
@@ -10,7 +9,7 @@ import { AuthService } from '../../services/auth.service';
 export class NavigationComponent {
   showDropDown: boolean;
 
-  constructor(private router: Router, private auth: AuthService) {}
+  constructor(private auth: AuthService) {}
 
   logout() {
     this.auth.signout()

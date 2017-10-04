@@ -6,7 +6,6 @@ module.exports = [
   require('./admin/communication/post'),
   require('./admin/users/reset/post'),
   require('./admin/search/get'),
-  require('./admin/home'),
   // v1 route
   require('./v1/account/logout'),
   require('./v1/account/status'),
@@ -33,5 +32,7 @@ module.exports = [
   require('./v1/pricing/plans'),
   require('./v1/vpn/certificate'),
   // static files
-  require('./static')
+  require('./static'),
+  require('./home'),
+  require('./redirect'),
 ];

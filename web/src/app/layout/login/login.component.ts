@@ -61,7 +61,7 @@ export class LoginComponent {
     this.signinButtonDisabled = true;
 
     this.auth.signin(this.user)
-    .then(() => { this.router.navigate(['/']); })
+    .then(() => { this.router.navigate(['/cp']); })
     .catch((err) => { this.signinButtonDisabled = false; });
   }
 }

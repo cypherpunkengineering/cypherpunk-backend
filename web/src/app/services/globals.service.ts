@@ -7,8 +7,8 @@ export class GlobalsService {
   ENV = 'DEV';
   API_VERSION = 'v1';
   BACKEND_HOST: string;
-  API_URL = 'http://localhost:4200/api/' + this.API_VERSION;
-  private devAPI = 'http://localhost:4200';
+  API_URL = '/api/' + this.API_VERSION;
+  private devAPI = '';
   private testAPI = 'https://test-api.cypherpunk.engineering';
   private stagingAPI = 'https://api.cypherpunk.engineering';
   private prodAPI = 'https://api.cypherpunk.com';

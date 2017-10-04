@@ -34,7 +34,6 @@ NPM dependencies:
 
 
 ## Configuration
-
 Configuration Files:
 Things to set on prod:
 - config/auth.js
@@ -50,7 +49,6 @@ Things to set on prod:
 
 
 ## Running
-
 Set env on NODE_ENV env var or will default to 'DEV'
 Set port on PORT env var or will default to 9000
 Set host on HOST env var or will default to 'localhost'
@@ -61,5 +59,15 @@ Daemons:
   - run ./daemons/expire-user in a separate thread using PM2
   - run ./daemons/amazon-recurring in a separate thread using PM2
 
-TODO:
+
+## TODO:
  -- billing system
+
+
+## DEV
+
+Nodemon will need to be installed globally using `npm install -g nodemon`  
+Angular CLI will need to be installed globally using `npm install -g @angular/cli@latest`  
+Launch the backend server using `nodemon server.js`  
+Then use the command `ng serve --proxy-config proxy.config.json` to launch a build of the webpages.
+All api calls should automatically be proxied to the backend server through :4200.
