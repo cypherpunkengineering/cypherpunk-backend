@@ -35,6 +35,17 @@ const server = module.exports = new Hapi.Server({ cache: [{
 const files = { relativeTo: path.join(__dirname, 'public') }; // deliver files from public dir
 server.connection({ port: config.port, host: config.host, address: config.address, tls: config.tls, routes: { files } });
 
+// transient cookie store
+server.state('cypherghost', {
+  ttl: null,
+  isSecure: false, // TODO set this to true on prod
+  isHttpOnly: true,
+  encoding: 'base64json',
+  path: '/',
+  clearInvalid: true,
+  strictHeader: true
+});
+
 // static file serving
 server.register(Inert)
 // logging

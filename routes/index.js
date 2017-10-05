@@ -10,6 +10,7 @@ module.exports = [
   require('./v1/account/logout'),
   require('./v1/account/status'),
   require('./v1/account/authenticate/userpasswd'),
+  require('./v1/account/authenticate/password'),
   require('./v1/account/change/email'),
   require('./v1/account/change/password'),
   require('./v1/account/confirm/email'),
