@@ -93,7 +93,7 @@ module.exports = {
         subscription: {
           active: sub.active || false,
           renews: sub.renewal_timestamp ? true : false,
-          type: sub.type || 'preview',
+          type: sub.type || 'free',
           expiration: sub.expiration_timestamp || 0
         }
       };
