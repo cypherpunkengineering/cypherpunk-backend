@@ -79,6 +79,7 @@ module.exports = {
       });
     })
     .then(() => {
+      sub = sub || {};
       return {
         secret: currentUser.secret || '',
         privacy: {

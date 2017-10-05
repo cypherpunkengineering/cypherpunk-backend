@@ -21,7 +21,7 @@ module.exports = {
     if (request.auth.isAuthenticated) { return reply.redirect('/'); }
 
     // create user
-    let user = {
+    let sub = {}, radius, user = {
       email: request.payload.email.toLowerCase(),
       password: bcrypt.hashSync(request.payload.password, 15),
       secret: randToken.generate(32),
@@ -30,6 +30,7 @@ module.exports = {
       confirmed: false,
       confirmation_token: randToken.generate(32)
     };
+
     let promise = request.db.insert(user).into('users').returning('*')
     .then((data) => {
       if (data.length) { user = data[0]; }
@@ -68,6 +69,35 @@ module.exports = {
     .then(() => { return updateRegisteredCount(request.db); })
     // print count to slack
     .then(() => { request.slack.count(); }) // TODO catch and print?
+    // get radius data
+    .then(() => {
+      return request.db.select('username', 'value').from('radius_tokens').where({ account: user.id })
+      .then((data) => {
+        if (data.length) { radius = data[0]; }
+        else { throw Boom.badRequest('Invalid Radius Account'); }
+      });
+    })
+    .then(() => {
+      return {
+        secret: user.secret || '',
+        privacy: {
+          username: radius.username,
+          password: radius.value
+        },
+        account: {
+          id: user.id,
+          email: user.email,
+          type: user.type,
+          confirmed: user.confirmed || false,
+        },
+        subscription: {
+          active: sub.active || false,
+          renews: sub.renewal_timestamp ? true : false,
+          type: sub.type || 'preview',
+          expiration: sub.expiration_timestamp || 0
+        }
+      };
+    })
     .catch((err) => { return Boom.badImplementation(err); });
     return reply(promise);
   }
