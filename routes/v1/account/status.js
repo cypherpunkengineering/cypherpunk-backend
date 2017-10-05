@@ -45,6 +45,7 @@ module.exports = {
     })
     // merge object into return value
     .then(() => {
+      sub = sub || {};
       return {
         secret: user.secret || '',
         privacy: {
@@ -58,10 +59,10 @@ module.exports = {
           confirmed: user.confirmed || false,
         },
         subscription: {
-          active: sub.active || false,
+          active: sub.active || true,
           renews: sub.renewal_timestamp ? true : false,
-          type: sub.type || 'preview',
-          expiration: sub.expiration_timestamp || null
+          type: sub.type || 'free',
+          expiration: sub.expiration_timestamp || 0
         }
       };
     })

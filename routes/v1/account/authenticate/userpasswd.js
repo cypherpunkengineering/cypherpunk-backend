@@ -94,7 +94,7 @@ module.exports = {
           confirmed: currentUser.confirmed || false,
         },
         subscription: {
-          active: sub.active || false,
+          active: sub.active || true,
           renews: sub.renewal_timestamp ? true : false,
           type: sub.type || 'free',
           expiration: sub.expiration_timestamp || 0
