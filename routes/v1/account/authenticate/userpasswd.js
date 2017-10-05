@@ -20,8 +20,15 @@ module.exports = {
   handler: (request, reply) => {
     if (request.auth.isAuthenticated) { return reply(); }
 
+    let currentUser, sub, radius;
     let email = request.payload.login.toLowerCase();
     let password = request.payload.password;
+    let subColumns = [
+      'active',
+      'renewal_timestamp',
+      'expiration_timestamp',
+      'type'
+    ];
 
     let promise = request.db
     .select()
@@ -44,7 +51,7 @@ module.exports = {
     .then((user) => {
       // validate password using bcrypt
       if (bcrypt.compareSync(password, user.password)) { return user; }
-      else { return Promise.reject(Boom.badRequest('Invalid Credentials')); }
+      else { return Promise.reject(Boom.forbidden('Invalid Credentials')); }
     })
     // create an authenticated session for this user
     .then((user) => {
@@ -53,9 +60,45 @@ module.exports = {
         request.server.app.cache.set('user:' + user.id, cachedUser, 0, (err) => {
           if (err) { return reject(err); }
           request.cookieAuth.set({ sid: 'user:' + user.id });
-          return resolve();
+          return resolve(user);
         });
       });
+    })
+    // build response data
+    .then((user) => { currentUser = user; })
+    // get user subscription data
+    .then(() => {
+      return request.db.select(subColumns).from('subscriptions').where({ user_id: currentUser.id })
+      .then((data) => { if (data.length) { sub = data[0]; } });
+    })
+    // get radius data
+    .then(() => {
+      return request.db.select('username', 'value').from('radius_tokens').where({ account: currentUser.id })
+      .then((data) => {
+        if (data.length) { radius = data[0]; }
+        else { throw Boom.badRequest('Invalid Radius Account'); }
+      });
+    })
+    .then(() => {
+      return {
+        secret: currentUser.secret || '',
+        privacy: {
+          username: radius.username,
+          password: radius.value
+        },
+        account: {
+          id: currentUser.id,
+          email: currentUser.email,
+          type: currentUser.type,
+          confirmed: currentUser.confirmed || false,
+        },
+        subscription: {
+          active: sub.active || false,
+          renews: sub.renewal_timestamp ? true : false,
+          type: sub.type || 'preview',
+          expiration: sub.expiration_timestamp || 0
+        }
+      };
     })
     .catch((err) => {
       console.log(err);

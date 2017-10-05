@@ -15,7 +15,7 @@ module.exports = {
       // create temp cookie for later use
       return reply({ code: 200 }).state('cypherghost', { email: user.email });
     }
-    else { return reply(Boom.unauthorized('Email Not Found')); }
+    else { return reply(Boom.forbidden('Email Not Found')); }
   }
 };
 
@@ -24,7 +24,7 @@ function getUser(request, reply) {
   let promise = request.db.select(['id', 'email']).from('users').where({ email: email })
   .then((data) => {
     if (data.length) { return data[0]; }
-    else { return Boom.unauthorized('Email Not Found'); }
+    else { return Boom.forbidden('Email Not Found'); }
   });
   return reply(promise);
 }

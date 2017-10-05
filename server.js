@@ -33,7 +33,7 @@ const server = module.exports = new Hapi.Server({ cache: [{
   partition: 'cache'
 }]});
 const files = { relativeTo: path.join(__dirname, 'public') }; // deliver files from public dir
-server.connection({ port: config.port, host: config.host, address: config.address, tls: config.tls, routes: { files } });
+server.connection({ port: config.port, host: config.host, address: config.address, tls: config.tls, routes: { files, cors: { credentials: true } } }); // TODO remove cors on prod
 
 // transient cookie store
 server.state('cypherghost', {
@@ -43,7 +43,8 @@ server.state('cypherghost', {
   encoding: 'base64json',
   path: '/',
   clearInvalid: true,
-  strictHeader: true
+  strictHeader: false, // TODO set this to true on prod
+  isSameSite: false // TODO set this to true on prod
 });
 
 // static file serving
