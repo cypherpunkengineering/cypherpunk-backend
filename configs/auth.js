@@ -6,6 +6,7 @@ module.exports = function(server) {
     ttl: 2147483647,
     keepAlive: true,
     clearInvalid: true,
+    isSameSite: false, // TODO: set this to true on PROD
     isSecure: false, // TODO: set this to true on PROD
     validateFunc: function (request, session, callback) {
       cache.get(session.sid, (err, cached) => {

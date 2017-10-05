@@ -6,7 +6,7 @@ const Hapi = require('hapi');
 const Good = require('good');
 const Inert = require('inert');
 const Redis = require('catbox-redis');
-const Auth = require('hapi-auth-cookie');
+// const Auth = require('hapi-auth-cookie');
 
 // local modules
 const db = require('./database');
@@ -15,6 +15,7 @@ const authOptions = require('./configs/auth');
 const logOptions = require('./configs/logging');
 
 // plugins
+const Auth = require('./plugins/hapi-auth');
 const slack = require('./plugins/slack');
 const mailer = require('./plugins/sendgrid');
 const plans = require('./plugins/plans');
