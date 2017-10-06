@@ -32,6 +32,7 @@ module.exports = [
   require('./v1/monitoring/hello'),
   require('./v1/pricing/plans'),
   require('./v1/vpn/certificate'),
+  require('./v1/emails/unsubscribe'),
   // static files
   require('./static'),
   require('./home'),

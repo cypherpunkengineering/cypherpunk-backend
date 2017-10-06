@@ -175,6 +175,14 @@ CREATE INDEX ON charges (created_at);
 CREATE INDEX ON charges (gateway);
 
 
+CREATE TABLE unsubscribe_list (
+  email character varying(255) NOT NULL,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  updated_at timestamp with time zone NOT NULL DEFAULT now()
+);
+CREATE INDEX ON unsubscribe_list (email);
+
+
 -- BillingPackage
 -- - PackageID
 -- - PackageName
