@@ -80,7 +80,13 @@ module.exports = {
       });
     })
     .then(() => {
+      // default sub to empty object if not found
       sub = sub || {};
+
+      if (currentUser.type === 'developer' || currentUser.type === 'staff') {
+        sub.active = true;
+      }
+
       return {
         secret: currentUser.secret || '',
         privacy: {
@@ -94,10 +100,11 @@ module.exports = {
           confirmed: currentUser.confirmed || false,
         },
         subscription: {
-          active: sub.active || true,
+          active: sub.active || false,
           renews: sub.renewal_timestamp ? true : false,
-          type: sub.type || 'free',
-          expiration: sub.expiration_timestamp || 0
+          type: sub.type || 'forever',
+          expiration: sub.expiration_timestamp || 0,
+          renewal: sub.renewal_timestamp ? sub.renewal_timestamp : 'forever' /// deprecated
         }
       };
     })
