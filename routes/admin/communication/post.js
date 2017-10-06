@@ -1,5 +1,6 @@
 const Joi = require('joi');
 const Boom = require('boom');
+const crypto = require('crypto');
 
 module.exports = {
   method: 'POST',
@@ -111,8 +112,18 @@ function mailUsers(users, email, mailer) {
 
     // start timeout to send email
     setTimeout(() => {
+      let token = encrypt(user.email);
+      let unsub = `https://api.cypherpunk.com/api/v1/emails/unsubscribe?email=${user.email}&token=${token}`;
       email.to = user.email;
+      email.substitutions.unsubLink = unsub;
       mailer.massCom(email);
     }, timer);
   });
+}
+
+function encrypt(text){
+  var cipher = crypto.createCipher('aes-256-ctr', 'jsucksballsformakingmedothisshit');
+  var crypted = cipher.update(text,'utf8','hex');
+  crypted += cipher.final('hex');
+  return crypted;
 }
