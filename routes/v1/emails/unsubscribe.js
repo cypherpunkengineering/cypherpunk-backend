@@ -16,9 +16,13 @@ module.exports = {
     let email = request.query.email;
 
     let promise = request.db('unsubscribe_list').insert({ email: email })
-    .then(() => { return; })
+    .then(() => { return 'Unsubscribed!'; })
     .catch((e) => {
       console.log(e);
+
+      // handle unique constraint error
+      if (e.code === '23505') { return 'Unsubscribed!'; }
+
       if (e.isBoom) { return e; }
       else { return Boom.badImplementation(); }
     });

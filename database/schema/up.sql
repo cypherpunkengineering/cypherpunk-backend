@@ -176,7 +176,7 @@ CREATE INDEX ON charges (gateway);
 
 
 CREATE TABLE unsubscribe_list (
-  email character varying(255) NOT NULL,
+  email character varying(255) UNIQUE NOT NULL,
   created_at timestamp with time zone NOT NULL DEFAULT now(),
   updated_at timestamp with time zone NOT NULL DEFAULT now()
 );
