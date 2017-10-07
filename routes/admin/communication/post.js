@@ -113,7 +113,7 @@ function mailUsers(users, email, mailer) {
     // start timeout to send email
     setTimeout(() => {
       let token = encrypt(user.email);
-      let unsub = `https://api.cypherpunk.com/api/v1/emails/unsubscribe?email=${user.email}&token=${token}`;
+      let unsub = `https://cypherpunk.com/unsubscribe?email=${user.email}&token=${token}`;
       email.to = user.email;
       email.substitutions.unsubLink = unsub;
       mailer.massCom(email);
