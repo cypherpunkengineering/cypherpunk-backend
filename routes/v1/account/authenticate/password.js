@@ -26,7 +26,7 @@ module.exports = {
     ];
 
     // ensure cookie with email is set
-    if (!cachedUser) { return reply(Boom.forbidden('Invalid Credentials')); }
+    if (!cachedUser) { return reply(Boom.badRequest('Invalid Credentials')); }
     else { email = cachedUser.email; }
 
     let promise = request.db
@@ -50,7 +50,7 @@ module.exports = {
     .then((user) => {
       // validate password using bcrypt
       if (bcrypt.compareSync(password, user.password)) { return user; }
-      else { return Promise.reject(Boom.forbidden('Invalid Credentials')); }
+      else { return Promise.reject(Boom.badRequest('Invalid Credentials')); }
     })
     // create an authenticated session for this user
     .then((user) => {
