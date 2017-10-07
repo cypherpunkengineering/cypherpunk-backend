@@ -26,10 +26,10 @@ module.exports = {
 
     // insert email into db
     let promise = request.db('unsubscribe_list').insert({ email: email })
-    .then(() => { return 'Unsubscribed!'; })
+    .then(() => { return { success: 'ok' }; })
     .catch((e) => {
       // handle unique constraint error
-      if (e.code === '23505') { return 'Unsubscribed!'; }
+      if (e.code === '23505') { return { success: 'ok' }; }
 
       console.log(e);
       if (e.isBoom) { return e; }
