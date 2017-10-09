@@ -78,30 +78,7 @@ module.exports = {
       });
     })
     .then(() => {
-      if (user.type === 'developer' || user.type === 'staff') {
-        sub.active = true;
-      }
-
-      return {
-        secret: user.secret || '',
-        privacy: {
-          username: radius.username,
-          password: radius.value
-        },
-        account: {
-          id: user.id,
-          email: user.email,
-          type: user.type,
-          confirmed: user.confirmed || false,
-        },
-        subscription: {
-          active: sub.active || false,
-          renews: sub.renewal_timestamp ? true : false,
-          type: sub.type || 'forever',
-          expiration: sub.expiration_timestamp || 0,
-          renewal: sub.renewal_timestamp ? sub.renewal_timestamp : 'forever' // deprecated
-        }
-      };
+      return request.account.makeStatusResponse({ request, user, subscription: sub, radius });
     })
     .catch((err) => { return Boom.badImplementation(err); });
     return reply(promise);
