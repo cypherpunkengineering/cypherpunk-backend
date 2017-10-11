@@ -16,6 +16,7 @@ import { AuthService } from '../services/auth.service';
 import { BackendService } from '../services/backend.service';
 import { GlobalsService } from '../services/globals.service';
 import { SessionService } from '../services/session.service';
+import { AuthGuard } from '../services/auth-guard.service';
 
 
 @NgModule({
@@ -33,10 +34,11 @@ import { SessionService } from '../services/session.service';
     AppRoutingModule
   ],
   providers: [
+    AuthGuard,
     AuthService,
     SessionService,
     BackendService,
-    GlobalsService,
+    GlobalsService
   ],
   bootstrap: [AppComponent]
 })

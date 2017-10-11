@@ -21,7 +21,6 @@ export class SessionService {
   };
 
   constructor(private backend: BackendService) {
-
     try {
       this.localStorage = window.localStorage;
       this.user.account.id = this.localStorage.getItem('account.id') || '';
@@ -34,7 +33,7 @@ export class SessionService {
       this.user.subscription.active = this.localStorage.getItem('subscription.active') || false;
       this.user.subscription.renews = this.localStorage.getItem('subscription.renews') || false;
       this.user.subscription.type = this.localStorage.getItem('subscription.type') || '';
-      let expiration = this.localStorage.getItem('subscription.expiration');
+      const expiration = this.localStorage.getItem('subscription.expiration');
       if (expiration === 'undefined' || !expiration) {
         this.user.subscription.expiration = undefined;
       }
@@ -51,43 +50,43 @@ export class SessionService {
     if (!user) { return; }
 
     if (user.privacy) {
-      let username = user.privacy.username || '';
+      const username = user.privacy.username || '';
       this.user.privacy.username = username;
       this.localStorage.setItem('privacy.username', username);
 
-      let password = user.privacy.password || '';
+      const password = user.privacy.password || '';
       this.user.privacy.password = password;
       this.localStorage.setItem('privacy.password', password);
     }
 
     if (user.account) {
-      let id = user.account.id || '';
+      const id = user.account.id || '';
       this.user.account.id = id;
       this.localStorage.setItem('account.id', id);
 
-      let email = user.account.email || '';
+      const email = user.account.email || '';
       this.user.account.email = email;
       this.localStorage.setItem('account.email', email);
 
-      let confirmed = user.account.confirmed || false;
+      const confirmed = user.account.confirmed || false;
       this.user.account.confirmed = confirmed;
       this.localStorage.setItem('account.confirmed', confirmed);
 
-      let type = user.account.type || '';
+      const type = user.account.type || '';
       this.user.account.type = type;
       this.localStorage.setItem('account.type', type);
     }
 
     if (user.subscription) {
-      let active = user.subscription.active || false;
+      const active = user.subscription.active || false;
       this.user.subscription.active = active;
       this.localStorage.setItem('subscription.active', active);
 
-      let renews = user.subscription.renews || false;
+      const renews = user.subscription.renews || false;
       this.user.subscription.renews = renews;
       this.localStorage.setItem('subscription.renews', renews);
 
-      let type = user.subscription.type || '';
+      const type = user.subscription.type || '';
       this.user.subscription.type = type;
       this.localStorage.setItem('subscription.type', type);
 
@@ -113,7 +112,7 @@ export class SessionService {
       data.authed = true;
       return data;
     })
-    .catch(() => { return { authed: false }; });
+    .catch(() => ({ authed: false }));
   }
 
   clearUserData() {

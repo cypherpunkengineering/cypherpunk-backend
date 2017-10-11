@@ -55,8 +55,8 @@ export class LoginComponent {
   }
 
   signin() {
-    let email = this.validateEmail();
-    let password = this.validatePassword();
+    const email = this.validateEmail();
+    const password = this.validatePassword();
     if (!email || !password || this.signinButtonDisabled) { return; }
     this.signinButtonDisabled = true;
 
