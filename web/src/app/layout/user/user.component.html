@@ -26,6 +26,11 @@
           </div>
 
           <div class="row">
+            <div class="heading">Deactivated: </div>
+            <div class="data">{{ user?.deactivated }}</div>
+          </div>
+
+          <div class="row">
             <div class="heading">Account Created: </div>
             <div class="data">{{ user?.created_at | date: 'dd/MM/yyyy' }}</div>
           </div>
@@ -121,8 +126,22 @@
         <div class="account-controls">
           <h3>Account Controls:</h3>
           <button (click)="resetPassword()">Reset Password</button>
+          <button (click)="showDeactivatedModal = true" *ngIf="!user?.deactivated">Deactivate Account</button>
         </div>
       </div>
     </div>
   </div>
 </div>
+
+<modal [(show)]="showDeactivatedModal">
+  <div modalHeader>Warning!</div>
+
+  <div modalBody>
+    Are you sure you want to deactivate this account?
+  </div>
+
+  <div modalFooter>
+    <button class="btn teal" (click)="deactivate()">Yes</button>
+    <button class="btn teal" (click)="showDeactivatedModal = false">Cancel</button>
+  </div>
+</modal>

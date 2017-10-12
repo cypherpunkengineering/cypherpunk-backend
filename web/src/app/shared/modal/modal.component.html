@@ -1,0 +1,18 @@
+<div class="modal" [ngClass]="{'open': show}">
+  <div class="background" (click)="updateShow(false)" [ngClass]="{'open': show}"></div>
+  <div class="content">
+    <div class="modal-content" [ngClass]="{'open': show}">
+      <div class="modal-header">
+        <ng-content select="[modalHeader]"></ng-content>
+      </div>
+
+      <div class="modal-body">
+        <ng-content select="[modalBody]"></ng-content>
+      </div>
+
+      <div class="modal-footer">
+        <ng-content select="[modalFooter]"></ng-content>
+      </div>
+    </div>
+  </div>
+</div>

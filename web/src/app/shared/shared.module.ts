@@ -6,6 +6,7 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NavigationComponent } from './navigation/navigation.component';
 import { SidebarComponent } from './sidebar/sidebar.component';
 import { UsersCardComponent } from './cards/users/users-card.component';
+import { ModalComponent } from './modal/modal.component';
 
 @NgModule({
   imports: [
@@ -16,7 +17,8 @@ import { UsersCardComponent } from './cards/users/users-card.component';
   declarations: [
     NavigationComponent,
     SidebarComponent,
-    UsersCardComponent
+    UsersCardComponent,
+    ModalComponent
   ],
   providers: [ ],
   exports: [
@@ -25,7 +27,8 @@ import { UsersCardComponent } from './cards/users/users-card.component';
     RouterModule,
     NavigationComponent,
     SidebarComponent,
-    UsersCardComponent
+    UsersCardComponent,
+    ModalComponent
   ]
 })
 export class SharedModule { }

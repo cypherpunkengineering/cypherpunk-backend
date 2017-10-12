@@ -48,18 +48,15 @@
   </div>
 </div>
 
-<div class="modal" [ngClass]="{'open': show}">
-  <div class="background" (click)="show = false" [ngClass]="{'open': show}"></div>
-  <div class="content">
-    <div class="modal-content" [ngClass]="{'open': show}">
-      <div class="modal-header">
-        Are you sure you want to send this email?
-      </div>
+<modal [(show)]="show">
+  <div modalHeader>Warning!</div>
 
-      <div class="modal-footer">
-        <button class="btn teal" (click)="sendMassCommunication()">Yes</button>
-        <button class="btn teal" (click)="show = false">Cancel</button>
-      </div>
-    </div>
+  <div modalBody>
+     Are you sure you want to send this email?
   </div>
-</div>
+
+  <div modalFooter>
+    <button class="btn teal" (click)="sendMassCommunication()">Yes</button>
+    <button class="btn teal" (click)="show = false">Cancel</button>
+  </div>
+</modal>

@@ -9,6 +9,7 @@ import { BackendService } from '../../services/backend.service';
 export class UserComponent {
   user: any;
   now = new Date();
+  showDeactivatedModal = false;
 
   constructor(private route: ActivatedRoute, private backend: BackendService) {
     this.route.params.subscribe(params => {
@@ -19,6 +20,13 @@ export class UserComponent {
   resetPassword() {
     return this.backend.adminReset(this.user.id, {})
     .then((data) => { alert('Reset Password Email Sent!'); });
+  }
+
+  deactivate() {
+    this.showDeactivatedModal = false;
+    return this.backend.deactivate(this.user.id, {})
+    .then(() =>  { this.user.deactivated = true; })
+    .then(() => { alert('User has been deactivated'); })
   }
 
   getUser(id) {

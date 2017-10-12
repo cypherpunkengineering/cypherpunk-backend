@@ -9,8 +9,8 @@ export class CommunicationComponent {
   subject: string;
   titleText: string;
   regularText: string;
-  group: string = 'dev';
-  show: boolean = false;
+  group = 'dev';
+  show = false;
 
   constructor(private backend: BackendService) { }
 
@@ -24,7 +24,7 @@ export class CommunicationComponent {
   sendMassCommunication() {
     this.show = false;
 
-    let body = {
+    const body = {
       group: this.group,
       subject: this.subject,
       titleText: this.titleText,

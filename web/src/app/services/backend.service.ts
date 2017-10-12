@@ -13,8 +13,8 @@ export class BackendService {
   // Admin functions
 
   user(id): Promise<any> {
-    let url = this.globals.API_URL + '/admin/users/' + id;
-    let options = new RequestOptions({
+    const url = this.globals.API_URL + '/admin/users/' + id;
+    const options = new RequestOptions({
       withCredentials: true
     });
     return this.http.get(url, options).toPromise()
@@ -23,8 +23,8 @@ export class BackendService {
   }
 
   users(query?): Promise<any> {
-    let url = this.globals.API_URL + '/admin/users'
-    let options = new RequestOptions({
+    const url = this.globals.API_URL + '/admin/users'
+    const options = new RequestOptions({
       withCredentials: true,
       search: query || {}
     });
@@ -34,32 +34,40 @@ export class BackendService {
   }
 
   userCounts(): Promise<any> {
-    let url = this.globals.API_URL + '/admin/users/counts';
-    let options = new RequestOptions({ withCredentials: true });
+    const url = this.globals.API_URL + '/admin/users/counts';
+    const options = new RequestOptions({ withCredentials: true });
     return this.http.get(url, options).toPromise()
     .then(this.parseJson)
     .catch(this.catchFunction);
   }
 
   sendEmail(body, options): Promise<any> {
-    let url = this.globals.API_URL + '/admin/communication';
-    options.withCredentials = true;;
+    const url = this.globals.API_URL + '/admin/communication';
+    options.withCredentials = true;
     return this.http.post(url, body, options).toPromise()
     .then(this.parseJson)
     .catch(this.catchFunction);
   }
 
   adminReset(userId, options): Promise<any> {
-    let url = this.globals.API_URL + `/admin/users/${userId}/reset`;
-    options.withCredentials = true;;
+    const url = this.globals.API_URL + `/admin/users/${userId}/reset`;
+    options.withCredentials = true;
+    return this.http.post(url, {}, options).toPromise()
+    .then(this.parseJson)
+    .catch(this.catchFunction);
+  }
+
+  deactivate(userId, options): Promise<any> {
+    const url = this.globals.API_URL + `/admin/users/${userId}/deactivate`;
+    options.withCredentials = true;
     return this.http.post(url, {}, options).toPromise()
     .then(this.parseJson)
     .catch(this.catchFunction);
   }
 
   userSearch(query?): Promise<any> {
-    let url = this.globals.API_URL + '/admin/search'
-    let options = new RequestOptions({
+    const url = this.globals.API_URL + '/admin/search'
+    const options = new RequestOptions({
       withCredentials: true,
       search: query || {}
     });
@@ -72,7 +80,7 @@ export class BackendService {
 
   signin(body, options): Promise<any> {
     // this will set cookie
-    let url = this.globals.API_URL + '/account/authenticate/userpasswd';
+    const url = this.globals.API_URL + '/account/authenticate/userpasswd';
     options.withCredentials = true;
     return this.http.post(url, body, options).toPromise()
     .then(this.parseJson)
@@ -81,14 +89,14 @@ export class BackendService {
 
   accountStatus(secret?: string): Promise<any> {
     let url = this.globals.API_URL + '/account/status';
-    let options = new RequestOptions({ withCredentials: true });
+    const options = new RequestOptions({ withCredentials: true });
     if (secret) { url = url + '?secret=' + secret; }
     return this.http.get(url, options).toPromise()
     .then(this.parseJson);
   }
 
   signout(body, options): Promise<any> {
-    let url = this.globals.API_URL + '/account/logout';
+    const url = this.globals.API_URL + '/account/logout';
     options.withCredentials = true;
     return this.http.post(url, body, options).toPromise()
     .then((res: Response) => {
@@ -99,7 +107,7 @@ export class BackendService {
 
   signup(body, options): Promise<any> {
     // this will set cookie
-    let url = this.globals.API_URL + '/account/register/signup';
+    const url = this.globals.API_URL + '/account/register/signup';
     options.withCredentials = true;
     return this.http.post(url, body, options).toPromise()
     .then(this.parseJson)
@@ -107,7 +115,7 @@ export class BackendService {
   }
 
   invite(body, options): Promise<any> {
-    let url = this.globals.API_URL + '/account/register/teaserShare';
+    const url = this.globals.API_URL + '/account/register/teaserShare';
     options.withCredentials = true;
     return this.http.post(url, body, options).toPromise()
     .then(this.parseJson)
@@ -115,7 +123,7 @@ export class BackendService {
   }
 
   recover(body, options): Promise<any> {
-    let url = this.globals.API_URL + '/account/recover/email';
+    const url = this.globals.API_URL + '/account/recover/email';
     options.withCredentials = true;
     return this.http.post(url, body, options).toPromise()
     .then(this.parseJson)
@@ -133,7 +141,7 @@ export class BackendService {
   }
 
   billingReceipts(options): Promise<any> {
-    let url = this.globals.API_URL + '/billing/receipts';
+    const url = this.globals.API_URL + '/billing/receipts';
     options.withCredentials = true;
     return this.http.get(url, options).toPromise()
     .then(this.parseJson)
@@ -143,26 +151,26 @@ export class BackendService {
   // public apis
 
   contactForm(body) {
-    let url = this.globals.API_URL + '/support/request/new';
+    const url = this.globals.API_URL + '/support/request/new';
     return this.http.post(url, body).toPromise()
     .then(this.parseJson)
     .catch(this.catchFunction);
   }
 
   networkStatus() {
-    let url = this.globals.API_URL + '/network/status';
+    const url = this.globals.API_URL + '/network/status';
     return this.http.get(url)
     .map(res => res.json());
   }
 
   locations() {
-    let url = this.globals.API_URL + '/location/list/premium';
+    const url = this.globals.API_URL + '/location/list/premium';
     return this.http.get(url)
     .map(res => res.json());
   }
 
   regions() {
-    let url = this.globals.API_URL + '/location/world';
+    const url = this.globals.API_URL + '/location/world';
     return this.http.get(url)
     .map(res => res.json());
   }
@@ -173,14 +181,14 @@ export class BackendService {
     if (!res['_body']) { return; } // handle empty status 200 return
     try { return res.json(); }
     catch (e) {
-      let error = 'Bad Response from server - ' + res;
+      const error = 'Bad Response from server - ' + res;
       return Promise.reject(error);
     }
   }
 
   catchFunction(error): Promise<any> {
     try {
-      let jsonError = error.json();
+      const jsonError = error.json();
       return Promise.reject(jsonError);
     }
     catch (parseError) {

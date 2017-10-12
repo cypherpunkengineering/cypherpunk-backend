@@ -15,46 +15,27 @@ module.exports = {
       }
     },
     // check if email already exists before handler
-    pre: [ { method: checkEmail } ]
+    pre: [ { method: checkEmail, assign: 'user' } ]
   },
   handler: (request, reply) => {
     if (request.auth.isAuthenticated) { return reply.redirect('/'); }
 
-    // create user
-    let sub = {}, radius, user = {
-      email: request.payload.email.toLowerCase(),
-      password: bcrypt.hashSync(request.payload.password, 15),
-      secret: randToken.generate(32),
-      type: 'free',
-      priority: 1,
-      confirmed: false,
-      confirmation_token: randToken.generate(32)
-    };
+    // functional scoped variables
+    let radius;
+    let user = request.pre.user;
+    let email = request.payload.email;
+    let password = request.payload.password;
 
-    let promise = request.db.insert(user).into('users').returning('*')
-    .then((data) => {
-      if (data.length) { user = data[0]; }
-      else { throw new Error('Could not create user'); }
-    })
+    // create user
+    let promise = createUser(email, password, request)
+    .then((data) => { user = data; })
     // create radius tokens
     .then(() => {
-      let username = request.radius.makeRandomString(26),
-          password = request.radius.makeRandomString(26);
-      return request.radius.addToken(user.id, username, password)
-      .then(() => { return request.radius.addTokenGroup(username, user.type); });
+      return createRadius(user, request)
+      .then((data) => { radius = data; });
     })
     // create session and cookie for user
-    .then(() => {
-      return new Promise((resolve, reject) => {
-        // set session? cookie? I forget.
-        let cachedUser = { id: user.id, email: user.email.toLowerCase(), type: user.type };
-        request.server.app.cache.set('user:' + user.id, cachedUser, 0, (err) => {
-          if (err) { return reject(err); }
-          request.cookieAuth.set({ sid: 'user:' + user.id });
-          return resolve();
-        });
-      });
-    })
+    .then(() => { return createSession(user, request); })
     // send welcome email
     .then(() => {
       let msg = { to: user.email, id: user.id, confirmationToken: user.confirmation_token };
@@ -69,56 +50,101 @@ module.exports = {
     .then(() => { return updateRegisteredCount(request.db); })
     // print count to slack
     .then(() => { request.slack.count(); }) // TODO catch and print?
-    // get radius data
-    .then(() => {
-      return request.db.select('username', 'value').from('radius_tokens').where({ account: user.id })
-      .then((data) => {
-        if (data.length) { radius = data[0]; }
-        else { throw Boom.badRequest('Invalid Radius Account'); }
-      });
-    })
-    .then(() => {
-      if (user.type === 'developer' || user.type === 'staff') {
-        sub.active = true;
-      }
-
-      return {
-        secret: user.secret || '',
-        privacy: {
-          username: radius.username,
-          password: radius.value
-        },
-        account: {
-          id: user.id,
-          email: user.email,
-          type: user.type,
-          confirmed: user.confirmed || false,
-        },
-        subscription: {
-          active: sub.active || false,
-          renews: sub.renewal_timestamp ? true : false,
-          type: sub.type || 'forever',
-          expiration: sub.expiration_timestamp || 0,
-          renewal: sub.renewal_timestamp ? sub.renewal_timestamp : 'forever' // deprecated
-        }
-      };
-    })
+    // create account status
+    .then(() => { return createStatus(user, radius, {}); })
     .catch((err) => { return Boom.badImplementation(err); });
     return reply(promise);
   }
 };
 
-function checkEmail(request, reply) {
-  let email = request.payload.email.toLowerCase();
-  let promise = request.db.select('id').from('users').where({ email: email })
+function createUser(email, password, request) {
+  return request.db.insert({
+    email: email.toLowerCase(),
+    password: bcrypt.hashSync(password, 15),
+    secret: randToken.generate(32),
+    type: 'free',
+    priority: 1,
+    confirmed: false,
+    confirmation_token: randToken.generate(32)
+  }).into('users').returning('*')
   .then((data) => {
-    if (data.length) { return Boom.badRequest('Email already in use'); }
-    else { return; }
+    if (data.length) { return data[0]; }
+    else { throw new Error('Could not create user'); }
+  });
+}
+
+function createRadius(user, request) {
+  let username = request.radius.makeRandomString(26);
+  let password = request.radius.makeRandomString(26);
+  return request.radius.addToken(user.id, username, password)
+  .then(() => { return request.radius.addTokenGroup(username, user.type); })
+  .then(() => {
+    return request.db.select('username', 'value')
+    .from('radius_tokens')
+    .where({ account: user.id });
   })
-  .catch((err) => { console.error(err); return Boom.badImplementation(err); });
-  return reply(promise);
+  .then((data) => {
+    if (data.length) { return data[0]; }
+    else { throw Boom.badRequest('Invalid Radius Account'); }
+  });
+}
+
+function createSession(user, request) {
+  // set session? cookie? I forget.
+  return new Promise((resolve, reject) => {
+    let cachedUser = { id: user.id, email: user.email.toLowerCase(), type: user.type };
+    request.server.app.cache.set('user:' + user.id, cachedUser, 0, (err) => {
+      if (err) { return reject(err); }
+      request.cookieAuth.set({ sid: 'user:' + user.id });
+      return resolve();
+    });
+  });
+}
+
+function createStatus(user, radius, sub) {
+  if (user.type === 'developer' || user.type === 'staff') {
+    sub.active = true;
+  }
+
+  return {
+    secret: user.secret || '',
+    privacy: {
+      username: radius.username,
+      password: radius.value
+    },
+    account: {
+      id: user.id,
+      email: user.email,
+      type: user.type,
+      confirmed: user.confirmed || false,
+    },
+    subscription: {
+      active: sub.active || false,
+      renews: sub.renewal_timestamp ? true : false,
+      type: sub.type || 'forever',
+      expiration: sub.expiration_timestamp || 0,
+      renewal: sub.renewal_timestamp ? sub.renewal_timestamp : 'forever' // deprecated
+    }
+  };
 }
 
 function updateRegisteredCount(db) {
   return db('user_counters').where({ type: 'registered' }).increment('count');
+}
+
+
+// Pre Methods:
+
+function checkEmail(request, reply) {
+  let email = request.payload.email.toLowerCase();
+  let promise = request.db.select().from('users').where({ email: email }).first()
+  .then((data) => {
+    if (data) { return Boom.badRequest('Email already in use'); }
+    else { return; }
+  })
+  .catch((err) => {
+    console.error(err);
+    return Boom.badImplementation(err);
+  });
+  return reply(promise);
 }

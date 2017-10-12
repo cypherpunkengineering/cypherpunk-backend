@@ -41,6 +41,7 @@ function getUserAccountInfo(db, userId) {
     'email',
     'type',
     'confirmed',
+    'deactivated',
     'created_at',
     'updated_at',
     'last_login',

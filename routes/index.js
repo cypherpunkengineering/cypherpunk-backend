@@ -5,6 +5,7 @@ module.exports = [
   require('./admin/users/get'),
   require('./admin/communication/post'),
   require('./admin/users/reset/post'),
+  require('./admin/users/deactivate/post'),
   require('./admin/search/get'),
   // v1 route
   require('./v1/account/logout'),
