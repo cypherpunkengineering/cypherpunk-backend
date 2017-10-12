@@ -29,3 +29,17 @@
     </div>
   </div>
 </div>
+
+<loading [(show)]="loading"></loading>
+
+<modal [(show)]="errors.login.show">
+  <div modalHeader>Error!</div>
+
+  <div modalBody>
+    {{ errors.login.message }}
+  </div>
+
+  <div modalFooter>
+    <button class="btn teal" (click)="errors.login.show = false">Okay</button>
+  </div>
+</modal>

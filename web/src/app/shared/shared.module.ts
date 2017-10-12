@@ -7,6 +7,7 @@ import { NavigationComponent } from './navigation/navigation.component';
 import { SidebarComponent } from './sidebar/sidebar.component';
 import { UsersCardComponent } from './cards/users/users-card.component';
 import { ModalComponent } from './modal/modal.component';
+import { LoadingComponent } from './loading/loading.component';
 
 @NgModule({
   imports: [
@@ -18,7 +19,8 @@ import { ModalComponent } from './modal/modal.component';
     NavigationComponent,
     SidebarComponent,
     UsersCardComponent,
-    ModalComponent
+    ModalComponent,
+    LoadingComponent
   ],
   providers: [ ],
   exports: [
@@ -28,7 +30,8 @@ import { ModalComponent } from './modal/modal.component';
     NavigationComponent,
     SidebarComponent,
     UsersCardComponent,
-    ModalComponent
+    ModalComponent,
+    LoadingComponent
   ]
 })
 export class SharedModule { }

@@ -10,9 +10,11 @@ import { AuthService } from '../../services/auth.service';
 export class LoginComponent {
   user = { email: '', password: '' };
   errors = {
+    login: { message: '', show: false },
     email: { message: '', touched: false },
     password: { message: '', touched: false }
   };
+  loading = false;
   signinButtonDisabled = false;
 
   constructor(
@@ -58,10 +60,16 @@ export class LoginComponent {
     const email = this.validateEmail();
     const password = this.validatePassword();
     if (!email || !password || this.signinButtonDisabled) { return; }
-    this.signinButtonDisabled = true;
+    this.loading = this.signinButtonDisabled = true;
 
     this.auth.signin(this.user)
     .then(() => { this.router.navigate(['/cp']); })
-    .catch((err) => { this.signinButtonDisabled = false; });
+    .catch((err) => {
+      console.log(err);
+      this.errors.login.show = true;
+      this.loading = this.signinButtonDisabled = false;
+      if (err.statusCode === 400) { this.errors.login.message = err.message; }
+      else { this.errors.login.message = 'Unknown Error logging in'; }
+    });
   }
 }

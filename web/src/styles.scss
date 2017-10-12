@@ -452,3 +452,16 @@ html { box-sizing: border-box; }
 *, *:before, *:after { box-sizing: inherit; }
 
 html, body { width: 100%; height: 100%; }
+
+
+/* Global Button Style */
+button {
+  border: 0;
+  background-color: #0d1e26;
+  padding: 10px;
+  border-radius: 5px;
+  cursor: pointer;
+  color: #fff;
+}
+button:hover { background-color: #163138; }
+button:disabled { background-color: #ddd; color: #000; }
