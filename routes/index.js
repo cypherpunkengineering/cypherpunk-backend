@@ -27,6 +27,8 @@ module.exports = flatten([
   require('./v1/account/confirm/emailChange'),
   require('./v1/account/confirm/resend'),
   require('./v1/account/identify/email'),
+  require('./v1/account/payment/paypal'),
+  require('./v1/account/payment/stripe'),
   require('./v1/account/purchase/amazon'),
   require('./v1/account/purchase/stripe'),
   require('./v1/account/recover/email'),
