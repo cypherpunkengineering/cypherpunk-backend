@@ -1,4 +1,14 @@
-module.exports = [
+function flatten(item, result) {
+  if (!result) { result = []; }
+  if (Array.isArray(item)) {
+    item.forEach(i => flatten(i, result));
+  } else {
+    result.push(item);
+  }
+  return result;
+}
+
+module.exports = flatten([
   // admin routes
   require('./admin/users/counts/get'),
   require('./admin/users/index/get'),
@@ -37,4 +47,4 @@ module.exports = [
   require('./static'),
   require('./home'),
   require('./redirect'),
-];
+]);
