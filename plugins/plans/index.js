@@ -264,6 +264,26 @@ const plansTest = {
   }
 };
 
+const planNames = {
+  monthly: "Cypherpunk Privacy Monthly Plan",
+  semiannually: "Cypherpunk Privacy Semiannual Plan",
+  annually: "Cypherpunk Privacy Yearly Plan"
+};
+
+function applyIdAndTypeAndName(plans) {
+  for (var type in plans) {
+    if (!plans.hasOwnProperty(type)) continue;
+    for (var id in plans[type]) {
+      if (!plans[type].hasOwnProperty(id)) continue;
+      plans[type][id].type = type;
+      plans[type][id].id = id;
+      plans[type][id].name = planNames[type];
+    }
+  }
+}
+applyIdAndTypeAndName(plans);
+applyIdAndTypeAndName(plansTest);
+
 const defaultPlanId = {
   monthly: 'monthly1195',
   semiannually: 'semiannually4200',
@@ -290,6 +310,15 @@ module.exports = {
   getDefaultPlans: () => {
     if (generalConfigs === 'DEV') { return defaultPlansTest; }
     else { return defaultPlans; }
+  },
+  getPlanByID: (planId) => {
+    let currentPlans = plans;
+    if (generalConfigs.env === 'DEV') { currentPlans = plansTest; }
+    for (let type in currentPlans) {
+      if (!currentPlans.hasOwnProperty(type)) continue;
+      if (currentPlans[type].hasOwnProperty(planId)) return currentPlans[type][planId];
+    }
+    return null;
   },
   getPlanByTypeAndID: (planType, planId) => {
     let currentPlans = plans;
