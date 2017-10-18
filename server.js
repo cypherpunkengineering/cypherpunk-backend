@@ -18,6 +18,8 @@ const logOptions = require('./configs/logging');
 const Auth = require('./plugins/hapi-auth');
 const slack = require('./plugins/slack');
 const mailer = require('./plugins/sendgrid');
+const alert = require('./plugins/alert');
+const account = require('./plugins/account');
 const plans = require('./plugins/plans');
 const subscriptions = require('./plugins/subscriptions');
 const world = require('./plugins/world');
@@ -28,24 +30,37 @@ const radius = require('./plugins/radius');
 const authorization = require('./plugins/authorization');
 
 // bootstrap server with redis as a cache
-const server = module.exports = new Hapi.Server({ cache: [{
-  engine: Redis,
-  host: '127.0.0.1',
-  partition: 'cache'
-}]});
+const server = global.server = new Hapi.Server({
+  cache: [{
+    engine: Redis,
+    host: '127.0.0.1',
+    partition: 'cache'
+  }]
+});
 const files = { relativeTo: path.join(__dirname, 'public') }; // deliver files from public dir
-server.connection({ port: config.port, host: config.host, address: config.address, tls: config.tls, routes: { files, cors: { credentials: true } } }); // TODO remove cors on prod
+server.connection({
+  port: config.port,
+  host: config.host,
+  address: config.address,
+  tls: config.tls,
+  routes: {
+    files,
+    cors: { // TODO remove cors on prod
+      origin: ['*'],
+      credentials: true
+    }
+  }
+});
 
 // transient cookie store
 server.state('cypherghost', {
-  ttl: null,
-  isSecure: false, // TODO set this to true on prod
+  ttl: 5 * 60 * 1000,
+  isSecure: !!config.tls,
   isHttpOnly: true,
   encoding: 'base64json',
   path: '/',
   clearInvalid: true,
-  strictHeader: false, // TODO set this to true on prod
-  isSameSite: false // TODO set this to true on prod
+  strictHeader: true
 });
 
 // static file serving
