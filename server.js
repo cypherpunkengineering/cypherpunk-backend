@@ -56,6 +56,10 @@ server.register(Inert)
 .then(() => { return server.decorate('request', 'slack', slack); })
 // sendgrid integration
 .then(() => { return server.decorate('request', 'mailer', mailer); })
+// alert integration
+.then(() => { return server.decorate('request', 'alert', alert); })
+// account integration
+.then(() => { return server.decorate('request', 'account', account); })
 // plans integration
 .then(() => { return server.decorate('request', 'plans', plans); })
 // subscription integration
