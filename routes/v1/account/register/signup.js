@@ -11,7 +11,8 @@ module.exports = {
     validate: {
       payload: {
         email: Joi.string().email().required(),
-        password: Joi.string().min(6).required()
+        password: Joi.string().min(6).required(),
+        billing: Joi.boolean().optional(),
       }
     },
     // check if email already exists before handler
@@ -30,6 +31,7 @@ module.exports = {
       confirmed: false,
       confirmation_token: randToken.generate(32)
     };
+    // TODO: flag user somehow if registered in billing mode (instead of registration email, send combined payment success + registration email, or send a trial email if no payment is received within a timeout)
 
     let promise = request.db.insert(user).into('users').returning('*')
     .then((data) => {
@@ -55,10 +57,12 @@ module.exports = {
         });
       });
     })
-    // send welcome email
+    // send welcome email (unless we're in billing registration mode)
     .then(() => {
-      let msg = { to: user.email, id: user.id, confirmationToken: user.confirmation_token };
-      return request.mailer.registration(msg); // TODO catch and print?
+      if (!request.payload.billing) {
+        let msg = { to: user.email, id: user.id, confirmationToken: user.confirmation_token };
+        return request.mailer.registration(msg); // TODO catch and print?
+      }
     })
     // notify slack of new signup
     .then(() => {
