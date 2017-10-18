@@ -1,20 +1,17 @@
-const PayPal = require('paypal-nvp-api');
 const config = require('../../configs/paypal');
 const request = require('request-promise');
-
-const server = require('../../server');
 
 const ipnServer = {
   'live': 'ipnpb.paypal.com',
   'sandbox': 'ipnpb.sandbox.paypal.com'
 }[config.mode];
 
-const paypal = PayPal(config);
+const paypal = require('paypal-nvp-api')(config);
 
 function numberedExtraVariables(prefix, vars) {
   var result = {};
   if (!Array.isArray(vars)) {
-    vars = Object.keys(vars).filter(k => vars[k] !== undefined).map(k => encodeURIComponent(k) + '=' + encodeURIComponent(vars[k]));
+    vars = Object.keys(vars).filter(k => vars[k] !== undefined).map(k => /*encodeURIComponent*/(k) + '=' + /*encodeURIComponent*/(vars[k]));
   }
   vars = vars.filter(k => k !== undefined);
   for (var i = 0; i < vars.length; i++) {
@@ -25,25 +22,28 @@ function numberedExtraVariables(prefix, vars) {
 
 module.exports = {
 
-  // Creates an encrypted button for a subscription with the requested properties, resolving to
-  // an object with the required code to send the user to a PayPal checkout for the subscription.
-  //
-  // Resolves to: {
-  //   code: raw html code for a button form (shouldn't be used directly)
-  //   action: the URL for the <form action> attribute
-  //   encrypted: the encrypted descriptor to go in a <input type="hidden" name="encrypted"> tag
-  // }
-  //
-  // https://developer.paypal.com/docs/classic/api/button-manager/BMCreateButton_API_Operation_NVP/
-  //
+  api: paypal,
+
+  /**
+   * Creates an encrypted button for a subscription with the requested properties, resolving to
+   * an object with the required code to send the user to a PayPal checkout for the subscription.
+   *
+   * Resolves to: {
+   *   code: raw html code for a button form (shouldn't be used directly)
+   *   action: the URL for the <form action> attribute
+   *   encrypted: the encrypted descriptor to go in a <input type="hidden" name="encrypted"> tag
+   * }
+   *
+   * https://developer.paypal.com/docs/classic/api/button-manager/BMCreateButton_API_Operation_NVP/
+   */
   createSubscriptionButton({
-    plan,          // Plan code (any alphanumeric identifier, e.g. 'monthly1195')
-    name,          // Displayed name of plan (e.g. "Cypherpunk Privacy Monthly Plan")
-    price,         // Price in USD (either a number or a string, e.g. '11.95')
-    period,        // Subscription interval as a number and unit ('1M', '6M' or '1Y')
-    delay = 0,     // Number of days until the start of the subscription period (due to limitations in PayPal's API, for long delays the actual delay might be shorter)
-    initial = 0,   // With a non-zero delay, specifies an initial amount charged immediately (e.g. for adjustments), implemented by making the trial period paid
-    custom = null, // A piece of custom data to associate with the subscription
+    plan,             // Plan code (any alphanumeric identifier, e.g. 'monthly1195')
+    name,             // Displayed name of plan (e.g. "Cypherpunk Privacy Monthly Plan")
+    price,            // Price in USD (either a number or a string, e.g. '11.95')
+    period,           // Subscription interval as a number and unit ('1M', '6M' or '1Y')
+    delay = 0,        // Number of days until the start of the subscription period (due to limitations in PayPal's API, for long delays the actual delay might be shorter)
+    initial = 0,      // With a non-zero delay, specifies an initial amount charged immediately (e.g. for adjustments), implemented by making the trial period paid
+    custom = null,    // A piece of custom data to associate with the subscription
     returnURL = null, // URL to redirect the user back to after a successful purchase
     cancelURL = null, // URL to redirect the user back to after a canceled purchase
   }) {
@@ -76,7 +76,7 @@ module.exports = {
       no_shipping: '1',
       custom: custom ? JSON.stringify(custom) : undefined,
       //modify: '1',
-      notify_url: server.info.uri + '/api/v1/paypal/ipn',
+      notify_url: server.info.uri + '/api/v1/ipn/paypal',
       cancel_return: cancelURL || undefined,
       return: returnURL || undefined,
       a3: price,
@@ -85,18 +85,23 @@ module.exports = {
     }, delayParameters))))
     .then(result => {
       if (result.ACK === 'Success') {
-        let m = result.WEBSITECODE.match(/^<form action="([^"]*)" method="post">\n<input type="hidden" name="cmd" value="_s-xclick">\n<input type="hidden" name="encrypted" value="([^"]*)"/);
+        let m = result.WEBSITECODE.match(/^<form action="([^"]*)" method="post">\s*<input type="hidden" name="cmd" value="_s-xclick">\s*<input type="hidden" name="encrypted" value="([^"]*)">/i);
         if (m && m[1] && m[2]) {
           return { code: result.WEBSITECODE, action: m[1], encrypted: m[2] };
         }
       }
       throw Object.assign(new Error("Invalid PayPal button: " + result.ACK), { result });
+    })
+    .catch(err => {
+      console.error(err);
+      throw err;
     });
   },
 
-  // Cancels a subscription with the given PayPal subscription ID.
-  // Resolves to nothing on success, rejects with an Error on failure.
-  //
+  /**
+   * Cancels a subscription with the given PayPal subscription ID.
+   * Resolves to nothing on success, rejects with an Error on failure.
+   */
   cancelSubscription(id) {
     return paypal.request('ManageRecurringPaymentsProfileStatus', {
       PROFILEID: id,
@@ -107,9 +112,10 @@ module.exports = {
     });
   },
 
-  // Validates an IPN by passing the notification back to PayPal's servers, resolves
-  // to the string 'VERIFIED' if successful or rejects with an Error otherwise.
-  //
+  /**
+   * Validates an IPN by passing the notification back to PayPal's servers, resolves
+   * to the string 'VERIFIED' if successful or rejects with an Error otherwise.
+   */
   validateIPN(ipn_body) {
     if (ipn_body instanceof Buffer) { ipn_body = ipn_body.toString('utf8'); }
     if (typeof ipn_body !== 'string') { return Promise.reject(new Error("Bad IPN body")); }
