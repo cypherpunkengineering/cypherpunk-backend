@@ -73,8 +73,8 @@ CREATE TABLE subscriptions (
   type character varying(255), -- monthly, semiannually, annually
   plan_id character varying(255), -- monthly899, etc
   provider character varying(255), -- stripe, amazon, paypal, bitpay, android, ios
-  provider_id uuid, -- stripe id, amazon id, paypal id, bitpay id
-  active boolean DEFAULT false NOT NULL,
+  --provider_id uuid, -- stripe id, amazon id, paypal id, bitpay id
+  active boolean DEFAULT false NOT NULL, -- subscription is active at the provider end and making charges / is authorized to make charges
   current boolean DEFAULT false NOT NULL,
   created_at timestamp with time zone NOT NULL DEFAULT now(),
   updated_at timestamp with time zone NOT NULL DEFAULT now(),
@@ -87,6 +87,7 @@ CREATE TABLE subscriptions (
   current_period_end_timestamp timestamp with time zone
 );
 CREATE INDEX ON subscriptions (user_id);
+--CREATE INDEX ON subscriptions (provider, provider_id);
 CREATE INDEX ON subscriptions (current);
 CREATE INDEX ON subscriptions (created_at);
 CREATE INDEX ON subscriptions (start_timestamp);
@@ -95,23 +96,23 @@ CREATE INDEX ON subscriptions (cancellation_timestamp);
 CREATE INDEX ON subscriptions (current_period_end_timestamp);
 
 
-CREATE TABLE stripe (
-  id uuid NOT NULL DEFAULT uuid_generate_v4() PRIMARY KEY,
-  customer_id character varying(255) NOT NULL UNIQUE,
+CREATE TABLE stripe_customers (
+  user_id uuid REFERENCES users (id) PRIMARY KEY,
+  stripe_id character varying(255) NOT NULL UNIQUE,
+  token character varying(255) NOT NULL, -- card
+  last4 character varying(4) NOT NULL,
+  exp_month character varying(15) NOT NULL,
+  exp_year character varying(15) NOT NULL,
+  brand character varying(100) NOT NULL
+);
+CREATE INDEX ON stripe_customers (stripe_id);
+
+CREATE TABLE stripe_subscriptions (
+  subscription_id uuid REFERENCES subscriptions (id) PRIMARY KEY,
+  stripe_id character varying(255) NOT NULL UNIQUE,
   stripe_data json
 );
-
-
-CREATE TABLE stripe_sources (
-  id uuid NOT NULL DEFAULT uuid_generate_v4() PRIMARY KEY,
-  user_id uuid REFERENCES users (id) NOT NULL,
-  card_id character varying(255) NOT NULL,
-  last4 character varying(4) NOT NULL,
-  exp_month character varying(15) NOT NULL, -- I just guessed here
-  exp_year character varying(15) NOT NULL, -- I just guessed here too
-  brand character varying(100) NOT NULL -- more guessing
-);
-CREATE INDEX ON stripe_sources (user_id);
+CREATE INDEX ON stripe_subscriptions (stripe_id);
 
 
 CREATE TABLE amazon (
@@ -122,11 +123,12 @@ CREATE TABLE amazon (
 );
 
 
-CREATE TABLE paypal (
-  id uuid NOT NULL DEFAULT uuid_generate_v4() PRIMARY KEY,
-  paypal_ident character varying(255) NOT NULL,
+CREATE TABLE paypal_subscriptions (
+  subscription_id uuid REFERENCES subscriptions (id) PRIMARY KEY,
+  paypal_id character varying(255) NOT NULL UNIQUE,
   paypal_data json
 );
+CREATE INDEX ON paypal_subscriptions (paypal_id);
 
 
 CREATE TABLE bitpay (
@@ -165,6 +167,7 @@ CREATE TABLE charges (
   refunded boolean DEFAULT false,
   refund_amount money,
   refund_date timestamp with time zone,
+  credited boolean DEFAULT true,
   data json NOT NULL
 );
 
