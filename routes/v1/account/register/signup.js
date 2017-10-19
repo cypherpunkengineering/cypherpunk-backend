@@ -11,7 +11,8 @@ module.exports = {
     validate: {
       payload: {
         email: Joi.string().email().required(),
-        password: Joi.string().min(6).required()
+        password: Joi.string().min(6).required(),
+        billing: Joi.boolean().optional(),
       }
     },
     // check if email already exists before handler
@@ -38,8 +39,10 @@ module.exports = {
     .then(() => { return createSession(user, request); })
     // send welcome email
     .then(() => {
-      let msg = { to: user.email, id: user.id, confirmationToken: user.confirmation_token };
-      return request.mailer.registration(msg); // TODO catch and print?
+      if (!request.payload.billing) {
+        let msg = { to: user.email, id: user.id, confirmationToken: user.confirmation_token };
+        return request.mailer.registration(msg); // TODO catch and print?
+      }
     })
     // notify slack of new signup
     .then(() => {
@@ -51,7 +54,9 @@ module.exports = {
     // print count to slack
     .then(() => { request.slack.count(); }) // TODO catch and print?
     // create account status
-    .then(() => { return createStatus(user, radius, {}); })
+    .then(() => {
+      return request.account.makeStatusResponse({ request, user, subscription: sub, radius });
+    })
     .catch((err) => { return Boom.badImplementation(err); });
     return reply(promise);
   }
@@ -99,33 +104,6 @@ function createSession(user, request) {
       return resolve();
     });
   });
-}
-
-function createStatus(user, radius, sub) {
-  if (user.type === 'developer' || user.type === 'staff') {
-    sub.active = true;
-  }
-
-  return {
-    secret: user.secret || '',
-    privacy: {
-      username: radius.username,
-      password: radius.value
-    },
-    account: {
-      id: user.id,
-      email: user.email,
-      type: user.type,
-      confirmed: user.confirmed || false,
-    },
-    subscription: {
-      active: sub.active || false,
-      renews: sub.renewal_timestamp ? true : false,
-      type: sub.type || 'forever',
-      expiration: sub.expiration_timestamp || 0,
-      renewal: sub.renewal_timestamp ? sub.renewal_timestamp : 'forever' // deprecated
-    }
-  };
 }
 
 function updateRegisteredCount(db) {

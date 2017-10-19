@@ -20,15 +20,8 @@ module.exports = {
   handler: (request, reply) => {
     if (request.auth.isAuthenticated) { return reply(); }
 
-    let currentUser, sub, radius;
     let email = request.payload.login.toLowerCase();
     let password = request.payload.password;
-    let subColumns = [
-      'active',
-      'renewal_timestamp',
-      'expiration_timestamp',
-      'type'
-    ];
 
     let promise = request.db
     .select()
@@ -65,48 +58,8 @@ module.exports = {
       });
     })
     // build response data
-    .then((user) => { currentUser = user; })
-    // get user subscription data
-    .then(() => {
-      return request.db.select(subColumns).from('subscriptions').where({ user_id: currentUser.id })
-      .then((data) => { if (data.length) { sub = data[0]; } });
-    })
-    // get radius data
-    .then(() => {
-      return request.db.select('username', 'value').from('radius_tokens').where({ account: currentUser.id })
-      .then((data) => {
-        if (data.length) { radius = data[0]; }
-        else { throw Boom.badRequest('Invalid Radius Account'); }
-      });
-    })
-    .then(() => {
-      // default sub to empty object if not found
-      sub = sub || {};
-
-      if (currentUser.type === 'developer' || currentUser.type === 'staff') {
-        sub.active = true;
-      }
-
-      return {
-        secret: currentUser.secret || '',
-        privacy: {
-          username: radius.username,
-          password: radius.value
-        },
-        account: {
-          id: currentUser.id,
-          email: currentUser.email,
-          type: currentUser.type,
-          confirmed: currentUser.confirmed || false,
-        },
-        subscription: {
-          active: sub.active || false,
-          renews: sub.renewal_timestamp ? true : false,
-          type: sub.type || 'forever',
-          expiration: sub.expiration_timestamp || 0,
-          renewal: sub.renewal_timestamp ? sub.renewal_timestamp : 'forever' /// deprecated
-        }
-      };
+    .then((user) => {
+      return request.account.makeStatusResponse({ request, user });
     })
     .catch((err) => {
       console.log(err);
