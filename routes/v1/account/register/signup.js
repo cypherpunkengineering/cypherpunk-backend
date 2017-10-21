@@ -55,7 +55,7 @@ module.exports = {
     .then(() => { request.slack.count(); }) // TODO catch and print?
     // create account status
     .then(() => {
-      return request.account.makeStatusResponse({ request, user, subscription: sub, radius });
+      return request.account.makeStatusResponse({ request, user, subscription: {}, radius });
     })
     .catch((err) => { return Boom.badImplementation(err); });
     return reply(promise);
