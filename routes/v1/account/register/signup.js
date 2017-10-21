@@ -19,8 +19,6 @@ module.exports = {
     pre: [ { method: checkEmail, assign: 'user' } ]
   },
   handler: (request, reply) => {
-    if (request.auth.isAuthenticated) { return reply.redirect('/'); }
-
     // functional scoped variables
     let radius;
     let user = request.pre.user;
