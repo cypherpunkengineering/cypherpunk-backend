@@ -63,7 +63,9 @@ export class LoginComponent {
     this.loading = this.signinButtonDisabled = true;
 
     this.auth.signin(this.user)
-    .then(() => { this.router.navigate(['/cp']); })
+    .then(() => {
+      this.loading = false;
+      this.router.navigate(['/cp']); })
     .catch((err) => {
       console.log(err);
       this.errors.login.show = true;
