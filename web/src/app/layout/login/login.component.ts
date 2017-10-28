@@ -1,7 +1,7 @@
 import { Router } from '@angular/router';
 import { Component } from '@angular/core';
-import { BackendService } from '../../services/backend.service';
 import { AuthService } from '../../services/auth.service';
+import { BackendService } from '../../services/backend.service';
 
 @Component({
   templateUrl: './login.component.html',
