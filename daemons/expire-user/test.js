@@ -19,6 +19,7 @@ return db('users').insert(user).returning('*')
   console.log('New User: ', user);
 
   let expDate = new Date();
+  expDate.setDate(expDate.getDate() - 16);
   expDate.setTime(expDate.getTime() + (60* 1000));
 
   let subscription = {
