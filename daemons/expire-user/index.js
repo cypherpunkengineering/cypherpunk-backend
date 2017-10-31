@@ -15,7 +15,7 @@ function findExpiring() {
     users.forEach((user) => {
       let expiry = user.expiration_timestamp;
       if (expiry < new Date()) { expireUser(user); }
-      else { schedule.scheduleJob(user.expiration_timestamp, expireUser.bind(null, user)); }
+      else { schedule.scheduleJob(expiry, expireUser.bind(null, user)); }
     });
   });
 }

@@ -1,6 +1,5 @@
 DROP TABLE IF EXISTS radius_token_groups;
 DROP TABLE IF EXISTS radius_tokens;
-DROP TABLE IF EXISTS stripe_sources;
 DROP TABLE IF EXISTS stripe_subscriptions;
 DROP TABLE IF EXISTS stripe_customers;
 DROP TABLE IF EXISTS paypal_subscriptions;

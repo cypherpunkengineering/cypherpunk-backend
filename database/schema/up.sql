@@ -78,6 +78,7 @@ CREATE TABLE subscriptions (
   current boolean DEFAULT false NOT NULL,
   created_at timestamp with time zone NOT NULL DEFAULT now(),
   updated_at timestamp with time zone NOT NULL DEFAULT now(),
+  last_warning_id INTEGER DEFAULT 0,
   start_timestamp timestamp with time zone,
   purchase_timestamp timestamp with time zone,
   renewal_timestamp timestamp with time zone,

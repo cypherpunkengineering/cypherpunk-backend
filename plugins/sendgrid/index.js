@@ -5,5 +5,6 @@ module.exports = {
   purchase: require('./templates/purchase'),
   teaserShare: require('./templates/teaserShare'),
   migration: require('./templates/migration'),
-  massCom: require('./templates/massCom')
+  massCom: require('./templates/massCom'),
+  subscriptionWarning: require('./templates/subscriptionWarning')
 };
