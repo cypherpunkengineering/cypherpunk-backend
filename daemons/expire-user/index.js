@@ -5,7 +5,7 @@ const schedule = require('node-schedule');
 function findExpiring() {
   // next hour
   let expDate = new Date();
-  expDate.setDate(expDate.getDate() + 16); // add 16 days
+  expDate.setDate(expDate.getDate() - 16); // add 16 days
   expDate.setTime(expDate.getTime() + (60 * 60 * 1000)); // add one hour
 
   // get all fully expired users
