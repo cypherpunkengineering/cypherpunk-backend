@@ -40,12 +40,12 @@ function generateSubstitutions(email, days) {
   else if (days === 15) { title = 'Please Buy Another Subscription'; }
   else if (days === 16) { title = 'Account Downgraded'; }
 
-  if (days === 1) { regular = 'Please Upate Payment Info'; }
-  else if (days === 4) { regular = 'Please Upate Payment Info'; }
-  else if (days === 9) { regular = 'Please Upate Payment Info'; }
-  else if (days === 12) { regular = 'Please Upate Payment Info'; }
-  else if (days === 15) { regular = 'Please Buy Another Subscription'; }
-  else if (days === 16) { regular = 'Account Downgraded'; }
+  if (days === 1) { regular = 'Your subscription will be cancelled in 11 days.'; }
+  else if (days === 4) { regular = 'Your subscription will be cancelled in 8 days.'; }
+  else if (days === 9) { regular = 'Your subscription will be cancelled in 3 days.'; }
+  else if (days === 12) { regular = 'You subscription has been cancelled and you account will be downgraded in 5 days.'; }
+  else if (days === 15) { regular = 'You can reactivate your subscription by logging into your account online. You account will be downgraded in 24 hours. '; }
+  else if (days === 16) { regular = 'You can reactivate your subscription by logging into your account online. '; }
 
   // generate unsub link
   let token = encrypt(email);
