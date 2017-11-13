@@ -4,7 +4,7 @@ const randToken = require('rand-token');
 
 // insert a user
 let user = {
-  email: 'ed+test@cypherpunk.com',
+  email: 'ed@cypherpunk.com',
   password: 'testpassword',
   secret: randToken.generate(32),
   type: 'free',
@@ -19,7 +19,7 @@ return db('users').insert(user).returning('*')
   console.log('New User: ', user);
 
   let expDate = new Date();
-  expDate.setDate(expDate.getDate() - 16);
+  expDate.setDate(expDate.getDate() - 1);
   expDate.setTime(expDate.getTime() + (60* 1000));
 
   let subscription = {

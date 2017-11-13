@@ -58,11 +58,14 @@ Main file: server.js
 Daemons:
   - run ./daemons/expire-user in a separate thread using PM2
   - run ./daemons/amazon-recurring in a separate thread using PM2
+  - run ./daemons/warnings in a separate thread using PM2
 
 
 ## TODO:
- -- billing system
-
+  -- amazon billing
+  -- bitpay subscription billing
+  -- ensure that last_warning_id is cleared on new charges
+  -- ensure that new charges update subscription expiration
 
 ## DEV
 
