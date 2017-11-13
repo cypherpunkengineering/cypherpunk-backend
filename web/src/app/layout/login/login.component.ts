@@ -1,7 +1,7 @@
 import { Router } from '@angular/router';
 import { Component } from '@angular/core';
-import { BackendService } from '../../services/backend.service';
 import { AuthService } from '../../services/auth.service';
+import { BackendService } from '../../services/backend.service';
 
 @Component({
   templateUrl: './login.component.html',
@@ -63,7 +63,9 @@ export class LoginComponent {
     this.loading = this.signinButtonDisabled = true;
 
     this.auth.signin(this.user)
-    .then(() => { this.router.navigate(['/cp']); })
+    .then(() => {
+      this.loading = false;
+      this.router.navigate(['/cp']); })
     .catch((err) => {
       console.log(err);
       this.errors.login.show = true;

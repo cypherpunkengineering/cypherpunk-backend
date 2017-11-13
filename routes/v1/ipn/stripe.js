@@ -1,3 +1,4 @@
+const generalConfig = require('../../../configs/general');
 const Boom = require('boom');
 
 module.exports = {
@@ -9,11 +10,55 @@ module.exports = {
     pre: [ { method: validateWebhook, assign: 'payload' } ]
   },
   handler: (request, reply) => {
-    // return 200 to stripe so they stop calling this route
-    reply();
-
     // stripe webhook body
     let payload = request.pre.payload;
+
+    let stripeCustomerId, stripeSubscriptionId;
+    if (payload.data && payload.data.object) {
+      stripeCustomerId = payload.data.object.customer;
+      stripeSubscriptionId = payload.data.object.subscription;
+    }
+    let user, subscription;
+
+    console.log("IPN", payload.type);
+
+    let promise = Promise.all([
+      stripeCustomerId && request.db('stripe_customers').where({ stripe_id: stripeCustomerId }).join('users', 'stripe_customers.user_id', 'users.id').first(),
+      stripeSubscriptionId && request.db('stripe_subscriptions').where({ stripe_id: stripeSubscriptionId }).join('subscriptions', 'stripe_subscriptions.subscription_id', 'subscriptions.id').first(),
+    ])
+    .then(arr => { [ user, subscription] = arr; })
+    .then(() =>{
+      //console.log("IPN", payload);
+      //console.log("user", user, "subscription", subscription);
+      switch (payload.type) {
+        case 'invoice.payment_succeeded':
+          console.log(payload.data.object);
+          return request.subscriptions.recordSuccessfulPayment({
+            subscription_id: subscription.id,
+            provider: 'stripe',
+            transaction_id: payload.data.object.charge || payload.data.object.invoice || payload.id,
+            user_id: user.id,
+            plan_id: subscription.plan_id,
+            currency: (payload.data.object.currency || 'USD').toUpperCase(),
+            amount: (payload.data.object.total / 100).toFixed(2),
+            date: new Date(payload.data.object.period_start * 1000),
+            data: payload,
+          });
+      }
+    })
+    .catch(err => { console.error(err); throw err; });
+
+    reply(promise);
+
+    /*
+    switch (payload.type) {
+      case 'invoice.payment_succeeded':
+        //recordSuccessfulPayment({ subscription_id, provider, transaction_id, user_id, plan_id, currency = 'USD', amount, date = new Date(), data }) {
+        request.subscriptions.recordSuccessfulPayment({
+          subscription_id: ...,
+          provider: 'stripe',
+          transaction_id, 
+        })
 
     // stripe customer id
     let customerId = payload.data.object.customer;
@@ -44,6 +89,7 @@ module.exports = {
       }
     })
     .catch(console.log);
+    */
   }
 };
 
@@ -109,8 +155,16 @@ function onChargeSucceeded(request, payload, user) {
 function validateWebhook(request, reply) {
   let payload = request.payload.toString('utf8');
   let stripeHeaderSig = request.headers['stripe-signature'];
-  let promise = request.stripe.verify_webhook(payload, stripeHeaderSig)
-  .then(() => { return JSON.parse(payload); })
+  let returnValue;
+  let promise = Promise.resolve()
+  .then(() => JSON.parse(payload))
+  .then(json => {
+    if (!json.livemode) {
+      if (generalConfig.env === 'DEV') return json;
+      throw new Error("Received test stripe notification on live server");
+    }
+    return request.stripe.verify_webhook(payload, stripeHeaderSig).then(() => json);
+  })
   .catch((e) => { return Boom.badRequest(e.message); });
   return reply(promise);
 }

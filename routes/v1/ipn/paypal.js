@@ -1,6 +1,12 @@
 const Boom = require('boom');
 const qs = require('qs');
 
+const handlers = {
+  'subscr_signup': onSubscriptionSignup,
+  'subscr_cancel': onSubscriptionCancel,
+  'subscr_payment': onSubscriptionPayment,
+};
+
 module.exports = {
   method: 'POST',
   path: '/api/v1/ipn/paypal',
@@ -10,36 +16,29 @@ module.exports = {
     pre: [ { method: validateIPN, assign: 'payload' } ]
   },
   handler: (request, reply) => {
-    // Payload data actually parsed in pre handler
+    // Payload data actually validated and parsed in pre handler
     let data = request.pre.payload;
 
-    // Parse custom data from JSON string parameter
-    try {
-      data.custom = JSON.parse(data.custom);
-      data.cypherpunk_account_id = data.custom.id;
-      data.cypherpunk_plan_type = request.plans.getPricingPlanType(data.custom.plan);
-    }
-    catch (e) { data.custom = {}; }
+    let userId = data.custom;
+    let plan = request.plans.getPlanByID(data.item_number);
 
-    // use txn_type to switch on how to handle this message
-    switch (data.txn_type) {
-      case 'subscr_signup':
-        onSubscriptionSignup(request, reply, data);
-        break;
-      case 'subscr_cancel':
-        onSubscriptionCancel(request, reply, data);
-        break;
-      case 'subscr_payment':
-        onSubscriptionPayment(request, reply, data);
-        break;
-      case 'subscr_eot':
-        sendSlackNotification(request.slack, data);
-        return reply();
-      default:
-        // send to billing channel on slack
-        sendSlackNotification(request.slack, data);
-        return reply(Boom.badImplementation('Unknown PayPal IPN type!'));
-    }
+    let promise = request.db('users').where({ id: userId }).first()
+    .then(user => {
+      // use txn_type to switch on how to handle this message
+      let handler = handlers[data.txn_type];
+      if (handler) { return handler(request, user, plan, data); }
+      else {
+        sendSlackNotification(request.slack, data, user);
+        if (data.txn_type !== 'subscr_eot') { throw Boom.badImplementation('Unknown PayPal IPN type'); }
+      }
+    })
+    // catch any raw errors so these 
+    .catch(err => Boom.badImplementation("IPN handling error", err))
+    // reply 
+    .then(replyresult => {
+      if (Boom.isBoom(result)) { reply(result); }
+      else { reply(); }
+    });
   }
 };
 
@@ -97,23 +96,38 @@ function sendSlackNotification(slack, data, user) {
 	slack.billing(msg);
 }
 
-function onSubscriptionSignup(request, reply, data) {
+function onSubscriptionSignup(request, user, plan, data) {
   // validate custom args
-  if (!data.cypherpunk_account_id) { return reply(Boom.badRequest('Invalid Account Id')); }
-  if (!data.cypherpunk_plan_type) { return reply(Boom.badRequest('Invalid Plan Type')); }
+  if (!data.cypherpunk_account_id) { throw Boom.badRequest('Invalid Account Id'); }
+  if (!data.cypherpunk_plan_type) { throw Boom.badRequest('Invalid Plan Type'); }
 
   // validate plan type
   let planType = request.plans.getPricingPlanType(data.cypherpunk_plan_type);
-  if (!planType) { return reply(Boom.badRequest('Invalid Plan Type')); }
+  if (!planType) { throw Boom.badRequest('Invalid Plan Type'); }
 
   // validate plan object and price
   let planId = data.item_number;
   let plan = request.plans.getPlanByTypeAndID(planType, planId);
-  if (!plan) { return reply(Boom.badRequest('Unknown Paypal Item Number')); }
+  if (!plan) { throw Boom.badRequest('Unknown Paypal Item Number'); }
   if (+plan.price !== +data.mc_amount3) {
-    return reply(Boom.badRequest(`Plan price doesn't match payment amount`));
+    throw Boom.badRequest(`Plan price doesn't match payment amount`);
   }
 
+  return request.subscriptions.recordSubscription({
+    user_id: user.id,
+    type: plan.type,
+    plan_id: plan.id,
+    provider: 'paypal',
+    renews: true,
+    firstPaymentIncluded: false,
+  })
+  .then(subscription => request.db('paypal_subscriptions').insert({
+    subscription_id: subscription.id,
+    stripe_id: data.subscr_id,
+    stripe_data: data
+  }));
+
+  /*
   // find user by account id
   let user, subscription, subscriptionRenewal, columns = ['id', 'email', 'type'];
   let promise = request.db.select(columns).from('users').where({ id: data.cypherpunk_account_id })
@@ -174,11 +188,12 @@ function onSubscriptionSignup(request, reply, data) {
     else { return Boom.badImplementation(err); }
   });
   return reply(promise);
+  */
 }
 
-function onSubscriptionCancel(request, reply, data) {
+function onSubscriptionCancel(request, user, plan, data) {
   // validate custom args
-  if (!data.cypherpunk_account_id) { return reply(Boom.badRequest('Invalid Account Id')); }
+  if (!data.cypherpunk_account_id) { throw Boom.badRequest('Invalid Account Id'); }
 
   // find user by account id
   let user, columns = ['id', 'email', 'type'];
@@ -196,22 +211,45 @@ function onSubscriptionCancel(request, reply, data) {
   return reply(promise);
 }
 
-function onSubscriptionPayment(request, reply, data) {
+function onSubscriptionPayment(request, user, plan, data) {
   // validate custom args
-  if (!data.cypherpunk_account_id) { return reply(Boom.badRequest('Invalid Account Id')); }
-  if (!data.cypherpunk_plan_type) { return reply(Boom.badRequest('Invalid Plan Type')); }
+  if (!data.cypherpunk_account_id) { throw Boom.badRequest('Invalid Account Id'); }
+  if (!data.cypherpunk_plan_type) { throw Boom.badRequest('Invalid Plan Type'); }
 
   // validate plan type
   let planType = request.plans.getPricingPlanType(data.cypherpunk_plan_type);
-  if (!planType) { return reply(Boom.badRequest('Invalid Plan Type')); }
+  if (!planType) { throw Boom.badRequest('Invalid Plan Type'); }
 
   // validate plan object and price
   let planId = data.item_number;
   let plan = request.plans.getPlanByTypeAndID(planType, planId);
-  if (!plan) { return reply(Boom.badRequest('Unknown Paypal Item Number')); }
+  if (!plan) { throw Boom.badRequest('Unknown Paypal Item Number'); }
   if (+plan.price !== +data.mc_gross) {
-    return reply(Boom.badRequest(`Plan price doesn't match payment amount`));
+    throw Boom.badRequest(`Plan price doesn't match payment amount`);
   }
+
+  let date = new Date(data.payment_date);
+
+  // this will throw an error if a subscription doesn't exist yet (e.g. notifications arrived out of order)
+  return request.db('paypal_subscriptions').where({ paypal_id: data.subscr_id }).first()
+  //recordSuccessfulPayment({ subscription_id, provider, transaction_id, user_id, plan_id, currency = 'USD', amount, date = new Date(), data }) {
+  .then(row => request.subscriptions.recordSuccessfulPayment({
+    subscription_id: row.subscription_id,
+    provider: 'paypal',
+    transaction_id: data.txn_id,
+    user_id: data.cypherpunk_account_id,
+    plan_id: plan.id,
+    currency: 'USD',
+    amount: plan.price,
+    date: date,
+    data: data,
+  }));
+
+  /*
+  .join('subscriptions', 'paypal_subscriptions.subscription_id', 'subscriptions.id').first()
+  .then(row => {
+
+  })
 
   // find user by account id
   let user, columns = ['users.id', 'users.email', 'users.type', 'subscriptions.id as sub_id'];
@@ -220,7 +258,7 @@ function onSubscriptionPayment(request, reply, data) {
   .where({
     'users.id': data.cypherpunk_account_id,
     'subscriptions.provider': 'paypal',
-    'subscriptions.current': true,
+    'subscriptions.active': true,
     'subscriptions.plan_id': planId
   })
   .select(columns)
@@ -248,10 +286,12 @@ function onSubscriptionPayment(request, reply, data) {
     else { return Boom.badImplementation(err); }
   });
   return reply(promise);
+  */
 }
 
 function validateIPN(request, reply) {
   let payload = request.payload.toString('utf8');
+  console.log(payload);
   let promise = request.paypal.validateIPN(payload)
   .then(() => qs.parse(payload))
   .catch(err => Boom.badRequest(err.message));

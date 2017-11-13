@@ -1,4 +1,4 @@
-const config = require('../../configs/sendgrid');
+const config = require('../../../configs/sendgrid');
 const mailer = require('@sendgrid/mail');
 
 mailer.setApiKey(config.sendgrid.key);
@@ -44,7 +44,10 @@ function mail(arg) {
   };
 
   if (!valid.valid) { return Promise.reject(valid.error); }
-  else if (config.disabled) { console.log(`Skipped sending email to ${arg.to}`); return Promise.resolve(); }
+  else if (config.disabled) {
+    console.log(`Skipped sending email to ${arg.to}`);
+    return Promise.resolve();
+  }
   else { return mailer.send(msg); }
 }
 

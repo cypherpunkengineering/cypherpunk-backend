@@ -35,6 +35,6 @@ module.exports = {
   env,     // 'DEV', 'PROD', 'STAGING'
   host,    // 'localhost'
   address, // '0.0.0.0'
-  port,    // 9000
+  port,    // 11080
   tls,     // { cert: '<file contents>', key: '<file contents>' }
 };

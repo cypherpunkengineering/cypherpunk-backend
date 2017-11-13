@@ -14,7 +14,8 @@ export class GlobalsService {
   private prodAPI = 'https://api.cypherpunk.com';
 
   private devServers = [
-    '185.80.220.41'
+    '185.80.220.41',
+    'test-dev.cypherpunk.engineering'
   ];
 
   constructor(@Inject(PLATFORM_ID) private platformId: Object) {

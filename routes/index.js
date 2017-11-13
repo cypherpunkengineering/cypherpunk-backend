@@ -1,4 +1,14 @@
-module.exports = [
+function flatten(item, result) {
+  if (!result) { result = []; }
+  if (Array.isArray(item)) {
+    item.forEach(i => flatten(i, result));
+  } else {
+    result.push(item);
+  }
+  return result;
+}
+
+module.exports = flatten([
   // admin routes
   require('./admin/users/counts/get'),
   require('./admin/users/index/get'),
@@ -18,6 +28,8 @@ module.exports = [
   require('./v1/account/confirm/emailChange'),
   require('./v1/account/confirm/resend'),
   require('./v1/account/identify/email'),
+  require('./v1/account/payment/paypal'),
+  require('./v1/account/payment/stripe'),
   require('./v1/account/purchase/amazon'),
   require('./v1/account/purchase/stripe'),
   require('./v1/account/recover/email'),
@@ -38,4 +50,4 @@ module.exports = [
   require('./static'),
   require('./home'),
   require('./redirect'),
-];
+]);
