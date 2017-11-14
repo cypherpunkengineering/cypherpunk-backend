@@ -1,4 +1,4 @@
-const generalConfigs = require('../../configs/general');
+const env = require('../../configs').env;
 
 
 const plans = {
@@ -308,12 +308,12 @@ module.exports = {
   defaultPlans: defaultPlans,
   defaultPlansTest: defaultPlansTest,
   getDefaultPlans: () => {
-    if (generalConfigs === 'DEV') { return defaultPlansTest; }
+    if (env === 'DEV') { return defaultPlansTest; }
     else { return defaultPlans; }
   },
   getPlanByID: (planId) => {
     let currentPlans = plans;
-    if (generalConfigs.env === 'DEV') { currentPlans = plansTest; }
+    if (env === 'DEV') { currentPlans = plansTest; }
     for (let type in currentPlans) {
       if (!currentPlans.hasOwnProperty(type)) continue;
       if (currentPlans[type].hasOwnProperty(planId)) return currentPlans[type][planId];
@@ -322,7 +322,7 @@ module.exports = {
   },
   getPlanByTypeAndID: (planType, planId) => {
     let currentPlans = plans;
-    if (generalConfigs.env === 'DEV') { currentPlans = plansTest; }
+    if (env === 'DEV') { currentPlans = plansTest; }
     if (currentPlans[planType]) { return currentPlans[planType][planId]; }
     else { return null; }
   },

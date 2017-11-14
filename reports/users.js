@@ -1,4 +1,4 @@
-const config = require('../configs/mongo');
+const config = require('../configs').mongo;
 const MongoClient = require('mongodb').MongoClient;
 const uri = config.uri;
 

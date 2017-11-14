@@ -1,10 +1,6 @@
 node_modules
 logs/cypher-log*
-configs/sendgrid.js
-configs/stripe.js
-configs/amazon.js
-configs/paypal.js
-configs/mongo.js
+configs/config.js
 .DS_Store
 ._.DS_Store
 public/static/*.txt
