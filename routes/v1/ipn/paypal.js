@@ -32,10 +32,10 @@ module.exports = {
         if (data.txn_type !== 'subscr_eot') { throw Boom.badImplementation('Unknown PayPal IPN type'); }
       }
     })
-    // catch any raw errors so these 
+    // catch any raw errors so these
     .catch(err => Boom.badImplementation("IPN handling error", err))
-    // reply 
-    .then(replyresult => {
+    // reply
+    .then(result => {
       if (Boom.isBoom(result)) { reply(result); }
       else { reply(); }
     });
@@ -96,7 +96,7 @@ function sendSlackNotification(slack, data, user) {
 	slack.billing(msg);
 }
 
-function onSubscriptionSignup(request, user, plan, data) {
+function onSubscriptionSignup(request, user, givenPlan, data) {
   // validate custom args
   if (!data.cypherpunk_account_id) { throw Boom.badRequest('Invalid Account Id'); }
   if (!data.cypherpunk_plan_type) { throw Boom.badRequest('Invalid Plan Type'); }
@@ -191,7 +191,7 @@ function onSubscriptionSignup(request, user, plan, data) {
   */
 }
 
-function onSubscriptionCancel(request, user, plan, data) {
+function onSubscriptionCancel(request, givenUser, givenPlan, data) {
   // validate custom args
   if (!data.cypherpunk_account_id) { throw Boom.badRequest('Invalid Account Id'); }
 
@@ -211,7 +211,7 @@ function onSubscriptionCancel(request, user, plan, data) {
   return reply(promise);
 }
 
-function onSubscriptionPayment(request, user, plan, data) {
+function onSubscriptionPayment(request, user, givenPlan, data) {
   // validate custom args
   if (!data.cypherpunk_account_id) { throw Boom.badRequest('Invalid Account Id'); }
   if (!data.cypherpunk_plan_type) { throw Boom.badRequest('Invalid Plan Type'); }

@@ -36,10 +36,7 @@ NPM dependencies:
 ## Configuration
 Configuration Files:
 Things to set on prod:
-- config/auth.js
-- config/logging.js
-- config/general.js (general server configurations)
-- config/sendgrid.js (sendgrid -apikey- configurations)
+- config/config.js 
 - knexfile.js (postgres connection config) //TODO: how to set to prod?
 
 

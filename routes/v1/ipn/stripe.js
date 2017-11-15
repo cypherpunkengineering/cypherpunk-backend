@@ -1,4 +1,4 @@
-const generalConfig = require('../../../configs/general');
+const configs = require('../../../configs');
 const Boom = require('boom');
 
 module.exports = {
@@ -57,7 +57,7 @@ module.exports = {
         request.subscriptions.recordSuccessfulPayment({
           subscription_id: ...,
           provider: 'stripe',
-          transaction_id, 
+          transaction_id,
         })
 
     // stripe customer id
@@ -160,7 +160,7 @@ function validateWebhook(request, reply) {
   .then(() => JSON.parse(payload))
   .then(json => {
     if (!json.livemode) {
-      if (generalConfig.env === 'DEV') return json;
+      if (configs.env === 'DEV') return json;
       throw new Error("Received test stripe notification on live server");
     }
     return request.stripe.verify_webhook(payload, stripeHeaderSig).then(() => json);

@@ -1,7 +1,7 @@
-const config = require('../../../configs/sendgrid');
+const config = require('../../../configs').sendgrid;
 const mailer = require('@sendgrid/mail');
 
-mailer.setApiKey(config.sendgrid.key);
+mailer.setApiKey(config.key);
 mailer.setSubstitutionWrappers('-', '-');
 
 function validate(arg) {

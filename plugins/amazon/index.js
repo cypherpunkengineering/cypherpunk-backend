@@ -1,7 +1,7 @@
 const crypto = require('crypto');
 const request = require('request-promise');
 const parseString = require('xml2js').parseString;
-const amazonConfigs = require('../../configs/amazon');
+const amazonConfigs = require('../../configs').amazon;
 
 function createStringToSign(nameValues) {
   // takes nameValues and converts it to something like this

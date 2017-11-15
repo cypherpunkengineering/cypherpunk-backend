@@ -1,4 +1,4 @@
-const config = require('../../configs/paypal');
+const config = require('../../configs').paypal;
 const request = require('request-promise');
 
 const ipnServer = {

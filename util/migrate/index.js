@@ -1,9 +1,9 @@
 const pg = require('../../database');
 const randToken = require('rand-token');
-const config = require('../../configs/mongo');
+const mongoConfigs = require('../../configs').mongo;
 const radius = require('../../plugins/radius');
 const MongoClient = require('mongodb').MongoClient;
-const uri = config.uri;
+const uri = mongoConfigs.uri;
 
 let keys = new Set();
 let dataKeys = new Set();

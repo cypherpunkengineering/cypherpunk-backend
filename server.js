@@ -1,4 +1,4 @@
-const config = require('./configs/general');
+const configs = require('./configs');
 
 // vendor modules
 const path = require('path');
@@ -11,8 +11,8 @@ const Redis = require('catbox-redis');
 // local modules
 const db = require('./database');
 const routes = require('./routes');
-const authOptions = require('./configs/auth');
-const logOptions = require('./configs/logging');
+const authOptions = configs.auth;
+const logOptions = configs.logging;
 
 // plugins
 const Auth = require('./plugins/hapi-auth');
@@ -39,10 +39,10 @@ const server = global.server = new Hapi.Server({
 });
 const files = { relativeTo: path.join(__dirname, 'public') }; // deliver files from public dir
 server.connection({
-  port: config.port,
-  host: config.host,
-  address: config.address,
-  tls: config.tls,
+  port: configs.port,
+  host: configs.host,
+  address: configs.address,
+  tls: configs.tls,
   routes: {
     files,
     cors: { // TODO remove cors on prod
@@ -55,7 +55,7 @@ server.connection({
 // transient cookie store
 server.state('cypherghost', {
   ttl: 5 * 60 * 1000,
-  isSecure: !!config.tls,
+  isSecure: !!configs.tls,
   isHttpOnly: true,
   encoding: 'base64json',
   path: '/',
