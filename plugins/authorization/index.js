@@ -4,7 +4,7 @@ const authorizedUserTypes = [
   'staff'
 ];
 
-function isAuthorized(request, reply) {
+function isAuthorized (request, reply) {
   let userType = request.auth.credentials.type;
   if (authorizedUserTypes.includes(userType)) { return reply(); }
   else { return reply(Boom.forbidden()); }
