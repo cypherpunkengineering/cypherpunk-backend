@@ -6,61 +6,60 @@ const randToken = require('rand-token');
 module.exports = {
   method: 'POST',
   path: '/api/v1/account/register/signup',
-  config: {
+  options: {
     auth: { strategy: 'session', mode: 'try' },
     validate: {
       payload: {
         email: Joi.string().email().required(),
         password: Joi.string().min(6).required(),
-        billing: Joi.boolean().optional(),
+        billing: Joi.boolean().optional()
       }
     },
     // check if email already exists before handler
     pre: [ { method: checkEmail, assign: 'user' } ]
   },
-  handler: (request, reply) => {
+  handler: async (request, h) => {
     // functional scoped variables
     let radius;
     let user = request.pre.user;
     let email = request.payload.email;
     let password = request.payload.password;
 
-    // create user
-    let promise = createUser(email, password, request)
-    .then((data) => { user = data; })
-    // create radius tokens
-    .then(() => {
-      return createRadius(user, request)
-      .then((data) => { radius = data; });
-    })
-    // create session and cookie for user
-    .then(() => { return createSession(user, request); })
-    // send welcome email
-    .then(() => {
+    try {
+      // create user
+      user = await createUser(email, password, request);
+
+      // create radius tokens
+      radius = await createRadius(user, request);
+
+      // create session and cookie for user
+      await createSession(user, request);
+
+      // send welcome email
       if (!request.payload.billing) {
         let msg = { to: user.email, id: user.id, confirmationToken: user.confirmation_token };
-        return request.mailer.registration(msg); // TODO catch and print?
+        await request.mailer.registration(msg);
       }
-    })
-    // notify slack of new signup
-    .then(() => {
-      let text = `[SIGNUP] ${user.email} has signed up for an account :highfive:`;
-      request.slack.billing(text); // TODO catch and print?
-    })
-    // update count
-    .then(() => { return updateRegisteredCount(request.db); })
-    // print count to slack
-    .then(() => { request.slack.count(); }) // TODO catch and print?
-    // create account status
-    .then(() => {
-      return request.account.makeStatusResponse({ request, user, subscription: {}, radius });
-    })
-    .catch((err) => { return Boom.badImplementation(err); });
-    return reply(promise);
+
+      // notify slack of new signup
+      request.slack.billing(`[SIGNUP] ${user.email} has signed up for an account`);
+
+      // update count
+      await updateRegisteredCount(request.db);
+
+      // print count to slack
+      request.slack.count();
+
+      // create account status
+      let userInfo = { request, user, subscription: {}, radius };
+      let response = await request.account.makeStatusResponse(userInfo);
+      return h.response(response).unstate('cypherghost');
+    }
+    catch (err) { return Boom.badImplementation(err); }
   }
 };
 
-function createUser(email, password, request) {
+async function createUser (email, password, request) {
   return request.db.insert({
     email: email.toLowerCase(),
     password: bcrypt.hashSync(password, 15),
@@ -70,57 +69,49 @@ function createUser(email, password, request) {
     confirmed: false,
     confirmation_token: randToken.generate(32)
   }).into('users').returning('*')
-  .then((data) => {
-    if (data.length) { return data[0]; }
-    else { throw new Error('Could not create user'); }
-  });
+    .then((data) => {
+      if (data.length) { return data[0]; }
+      else { throw new Error('Could not create user'); }
+    });
 }
 
-function createRadius(user, request) {
+async function createRadius (user, request) {
   let username = request.radius.makeRandomString(26);
   let password = request.radius.makeRandomString(26);
   return request.radius.addToken(user.id, username, password)
-  .then(() => { return request.radius.addTokenGroup(username, user.type); })
-  .then(() => {
-    return request.db.select('username', 'value')
-    .from('radius_tokens')
-    .where({ account: user.id });
-  })
-  .then((data) => {
-    if (data.length) { return data[0]; }
-    else { throw Boom.badRequest('Invalid Radius Account'); }
-  });
-}
-
-function createSession(user, request) {
-  // set session? cookie? I forget.
-  return new Promise((resolve, reject) => {
-    let cachedUser = { id: user.id, email: user.email.toLowerCase(), type: user.type };
-    request.server.app.cache.set('user:' + user.id, cachedUser, 0, (err) => {
-      if (err) { return reject(err); }
-      request.cookieAuth.set({ sid: 'user:' + user.id });
-      return resolve();
+    .then(() => { return request.radius.addTokenGroup(username, user.type); })
+    .then(() => {
+      return request.db.select('username', 'value')
+        .from('radius_tokens')
+        .where({ account: user.id });
+    })
+    .then((data) => {
+      if (data.length) { return data[0]; }
+      else { throw Boom.badRequest('Invalid Radius Account'); }
     });
-  });
 }
 
-function updateRegisteredCount(db) {
+async function createSession (user, request) {
+  // set session? cookie? I forget.
+  let cachedUser = { id: user.id, email: user.email.toLowerCase(), type: user.type };
+  await request.server.app.cache.set('user:' + user.id, cachedUser, 0);
+  return request.cookieAuth.set({ sid: 'user:' + user.id });
+}
+
+async function updateRegisteredCount (db) {
   return db('user_counters').where({ type: 'registered' }).increment('count');
 }
 
 
 // Pre Methods:
 
-function checkEmail(request, reply) {
+async function checkEmail (request, h) {
   let email = request.payload.email.toLowerCase();
-  let promise = request.db.select().from('users').where({ email: email }).first()
-  .then((data) => {
-    if (data) { return Boom.badRequest('Email already in use'); }
-    else { return; }
-  })
-  .catch((err) => {
-    console.error(err);
-    return Boom.badImplementation(err);
-  });
-  return reply(promise);
+
+  try {
+    let user = await request.db.select().from('users').where({ email: email }).first();
+    if (user) { return Boom.badRequest('Email already in use'); }
+    else { return {}; }
+  }
+  catch (err) { return Boom.badImplementation(err); }
 }

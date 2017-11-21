@@ -3,8 +3,8 @@ const Boom = require('boom');
 module.exports = {
   method: 'POST',
   path: '/api/v1/ipn/bitpay',
-  config: { auth: false },
-  handler: (request, reply) => {
+  options: { auth: false },
+  handler: async (request, h) => {
     // convert custom string into JS object
     let data = request.payload;
     try {
@@ -17,21 +17,21 @@ module.exports = {
     // use action to switch on how to handle this message
     switch (data.action) {
       case 'invoiceStatus':
-        if (data.status === 'confirmed') {
-          onInvoicePaid(request, reply, data);
+        if (data.status === 'confirmed') { return onInvoicePaid(request, h, data); }
+        else {
+          sendSlackNotification(request.slack, data);
+          return h.response().code(200);
         }
-        else { sendSlackNotification(request.slack, data).then(() => { return reply(); }); }
-        break;
       // send to billing channel on slack
       default:
         sendSlackNotification(request.slack, data);
-        return reply(Boom.badImplementation('Unknown BitPay IPN type!'));
+        return Boom.badImplementation('Unknown BitPay IPN type!');
     }
   }
 };
 
-function sendSlackNotification(slack, data, user) {
-  let msg = "[*BitPay*] ";
+function sendSlackNotification (slack, data, user) {
+  let msg = '[*BitPay*] ';
 
   switch (data.action) {
     case 'invoiceStatus':
@@ -53,60 +53,58 @@ function sendSlackNotification(slack, data, user) {
   msg += `\rBitPay invoice ${data.invoice_id} is ${data.status}`;
   msg += `\rAmount: ₿ ${data.btcPaid} BTC -> ${data.amount} USD`;
 
-	// send to slack
-	slack.billing(msg);
+  // send to slack
+  slack.billing(msg);
 }
 
-function onInvoicePaid(request, reply, data) {
+async function onInvoicePaid (request, h, data) {
   // validate custom args
-  if (!data.cypherpunk_account_id) { return reply(Boom.badRequest('Invalid Account Id')); }
-  if (!data.cypherpunk_plan_type) { return reply(Boom.badRequest('Invalid Plan Type')); }
+  if (!data.cypherpunk_account_id) { return Boom.badRequest('Invalid Account Id'); }
+  if (!data.cypherpunk_plan_type) { return Boom.badRequest('Invalid Plan Type'); }
 
   // validate plan type
   let planType = request.plans.getPricingPlanType(data.cypherpunk_plan_type);
-  if (!planType) { return reply(Boom.badRequest('Invalid Plan Type')); }
+  if (!planType) { return Boom.badRequest('Invalid Plan Type'); }
   console.log('PlanType: ', planType);
 
   // validate plan object and price
   let planId = request.plans.defaultPlanId[data.cypherpunk_plan_type];
   let plan = request.plans.getPlanByTypeAndID(planType, planId);
-  if (!plan) { return reply(Boom.badRequest('Unknown Subscription Plan')); }
+  if (!plan) { return Boom.badRequest('Unknown Subscription Plan'); }
   if (+plan.price !== +data.amount) {
-    return reply(Boom.badRequest(`Plan price doesn't match payment amount`));
+    return Boom.badRequest(`Plan price doesn't match payment amount`);
   }
   console.log('Plan: ', planId, plan);
 
   // calculate subscription renewal
   let subscriptionRenewal = request.subscriptions.calculateRenewal(planId);
   if (!subscriptionRenewal) {
-    throw Boom.badImplementation('Unable to calculate subscription period');
+    return Boom.badImplementation('Unable to calculate subscription period');
   }
   console.log('SubscriptionRenewal: ', subscriptionRenewal);
 
-  // find user by account id
-  let user, subscription, columns = ['id', 'email', 'type'];
-  let promise = request.db.select(columns).from('users').where({ id: data.cypherpunk_account_id })
-  .then((data) => {
-    if (data.length) { user = data[0]; }
-    else { throw Boom.notFound('Cypherpunk Id not found'); }
-  })
-  // create paypal object in db
-  .then(() => {
-    return request.db.insert({
-      bitpay_ident: data.invoice_id,
-      bitpay_data: data
-    }).into('bitpay').returning('*')
-    .then((data) => { return data[0]; });
-  })
-  // create subscription
-  // TODO: unset current on the default subscription object
-  .then((provider) => {
-    subscription = {
+  try {
+    // get this user from DB
+    let columns = ['id', 'email', 'type'];
+    let whereConstraint = { id: data.cypherpunk_account_id };
+    let user = await request.db.select(columns).from('users').where(whereConstraint);
+    if (user.length) { user = user[0]; }
+    else { return Boom.notFound('Cypherpunk Id not found'); }
+
+    // create biypay object in db
+    let bitpayData = { bitpay_ident: data.invoice_id, bitpay_data: data };
+    let bitpay = await request.db.insert(bitpayData).into('bitpay').returning('*');
+    if (bitpay.length) { bitpay = bitpay[0]; }
+    else { return Boom.badImplementation('Could Not Create Bitpay Object'); }
+
+    // create subscription
+    // TODO: unset current on the default subscription object
+    let subData = {
       user_id: user.id,
       type: planType,
       plan_id: planId,
       provider: 'bitpay',
-      provider_id: provider.id,
+      provider_id: bitpay.id,
       active: true,
       current: true,
       start_timestamp: new Date(),
@@ -115,12 +113,12 @@ function onInvoicePaid(request, reply, data) {
       current_period_start_timestamp: new Date(),
       current_period_end_timestamp: subscriptionRenewal
     };
-    return request.db.insert(subscription).into('subscriptions').returning('*')
-    .then((data) => { subscription = data[0]; });
-  })
-  // create charge object
-  .then(() => {
-    return request.db.insert({
+    let subscription = await request.db.insert(subData).into('subscriptions').returning('*');
+    if (subscription.length) { subscription = subscription[0]; }
+    else { return Boom.badImplementation('Could Not Create Subscription Object'); }
+
+    // create charge object
+    let chargeData = {
       gateway: 'bitpay',
       transaction_id: data.invoice_id,
       user_id: user.id,
@@ -129,25 +127,25 @@ function onInvoicePaid(request, reply, data) {
       currency: 'USD',
       amount: data.amount,
       data: data
-    }).into('charges').returning('*');
-  })
+    };
+    await request.db.insert(chargeData).into('charges').returning('*');
 
-  // TODO: update radius
-  // send purchase email
-  .then(() => {
+    // TODO: update radius
+
+    // send purchase email
     let msg = {
       to: user.email,
       subscriptionPrice: plan.price,
       subscriptionRenewal: planType,
       subscriptionExpiration: subscriptionRenewal
     };
-    request.mailer.purchase(msg); // TODO catch and print?
-  })
-  // notify slack of new signup
-  .then(() => { sendSlackNotification(request.slack, data, user); })
-  .catch((err) => {
-    if (err.isBoom) { return err; }
-    else { return Boom.badImplementation(err); }
-  });
-  return reply(promise);
+    await request.mailer.purchase(msg);
+
+    // notify slack of new signup
+    sendSlackNotification(request.slack, data, user);
+
+    // return status 200
+    return h.response().code(200);
+  }
+  catch (err) { return Boom.badImplementation(err); }
 }

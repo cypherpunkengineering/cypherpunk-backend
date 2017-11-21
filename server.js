@@ -17,7 +17,7 @@ const Inert = require('inert');
 // LOCAL MODULES
 
 const db = require('./database');
-// const routes = require('./routes');
+const routes = require('./routes');
 const authOptions = configs.auth;
 // const logOptions = configs.logging;
 
@@ -112,22 +112,24 @@ async function bootstrap () {
   // logging
   // await server.register({ plugin: Good, options: logOptions }); });
 
-  // auth strategy
   // session caching (30 days)
   // TODO: double check cache expiresIn - use redis instead to persist session forever
   server.app.cache = server.cache({ segment: 'sessions', expiresIn: 2147483647 });
-  await server.register({ plugin: Auth })
-    .then(() => { authOptions(server); });
+
+  // auth strategy
+  await server.register({ plugin: Auth });
+  authOptions(server);
 
   // routes (must come after inert)
-  // server.route(routes);
+  server.route(routes);
 
-  // start server
-  return server.start()
-    // print server started
-    .then(() => { console.log(`Server running at: ${server.info.uri}`); })
-    // catch all error handling
-    .catch((err) => { throw err; });
+  // start server and print
+  try {
+    await server.start();
+    console.log(`Server running at: ${server.info.uri}`);
+  }
+  // catch all error handling
+  catch (err) { console.log('Failed to start server: ', err); }
 }
 
 bootstrap();

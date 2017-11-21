@@ -1,8 +1,8 @@
 module.exports = {
   method: 'GET',
   path: '/api/v1/location/world',
-  config: { auth: false },
-  handler: (request, reply) => {
+  options: { auth: false },
+  handler: async (request, h) => {
     let world = {
       region: request.world.regions,
       regionOrder: ['DEV'].concat(request.world.regionOrder),
@@ -18,6 +18,6 @@ module.exports = {
     });
 
     // return the world
-    return reply(world);
+    return world;
   }
 };

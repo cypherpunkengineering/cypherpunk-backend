@@ -1,8 +1,8 @@
 module.exports = {
   method: 'GET',
   path: '/api/v1/app/versions',
-  config: { auth: false },
-  handler: (request, reply) => {
+  options: { auth: false },
+  handler: async (request, h) => {
     // app version output
     let versions = {
       windows: {
@@ -43,6 +43,6 @@ module.exports = {
     };
 
     // create stripe account
-    return reply(versions);
+    return versions;
   }
 };

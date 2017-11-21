@@ -4,7 +4,7 @@ const Boom = require('boom');
 module.exports = {
   method: 'POST',
   path: '/api/v1/account/confirm/emailChange',
-  config: {
+  options: {
     auth: false,
     validate: {
       payload: {
@@ -15,69 +15,66 @@ module.exports = {
     // get user attached to this account id
     pre: [ { method: getUser, assign: 'user' } ]
   },
-  handler: (request, reply) => {
+  handler: async (request, h) => {
     let user = request.pre.user;
 
     // ensure pending_email and pending_email_confirmation_token exists
     if (!user.pending_email || !user.pending_email_confirmation_token) {
-      return reply(Boom.badRequest('Account has not requested an email change'));
+      return Boom.badRequest('Account has not requested an email change');
     }
 
     if (user.pending_email_confirmation_token !== request.payload.confirmationToken) {
-      return reply(Boom.badRequest('Invalid Token'));
+      return Boom.badRequest('Invalid Token');
     }
 
     // check to see if user was previously confirmed
     let previousEmail = user.email;
     let previouslyConfirmed = user.confirmed;
 
-    // update user account to confirmed
-    let promise = request.db('users').update({
-      confirmed: true,
-      email: user.pending_email,
-      pending_email: null,
-      pending_email_confirmation_token: null
-    }).where({ id: user.id })
-    // TODO: enable radius?
-    // notify slack of new confirmation
-    .then(() => {
-      // TODO catch and print?
-      let text = `[CHANGE] User email change from ${previousEmail} to ${user.pending_email} has been confirmed :sunglasses:`;
+    try {
+      // update user account to confirmed
+      let updatedUser = {
+        confirmed: true,
+        email: user.pending_email,
+        pending_email: null,
+        pending_email_confirmation_token: null
+      };
+      await request.db('users').update(updatedUser).where({ id: user.id });
+
+      // TODO: enable radius?
+
+      // notify slack of new confirmation
+      let text = `[CHANGE] User email change from ${previousEmail} to ${user.pending_email} has been confirmed`;
       request.slack.billing(text);
-    })
-    // if not previously confirmed, notify slack of new confirmation
-    .then(() => {
+
+      // if not previously confirmed, notify slack of new confirmation
       if (!previouslyConfirmed) {
-        // TODO catch and print?
-        request.slack.billing(`[CONFIRM] User ${user.email} has been confirmed :sunglasses:`);
+        request.slack.billing(`[CONFIRM] User ${user.email} has been confirmed`);
       }
-    })
-    // if not previously confirmed, update confirmation count
-    .then(() => {
-      // TODO catch and print?
+
+      // if not previously confirmed, update confirmation count
       if (!previouslyConfirmed) { return updateConfirmedCount(request.db); }
-    })
-    // if not previously confirmed, print count to slack
-    .then(() => {
-      if (!previouslyConfirmed) { request.slack.count(); } // TODO catch and print?
-    })
-    // TODO: update stripe with new email
-    .catch((err) => { return Boom.badImplementation(err); });
-    return reply(promise);
+
+      // if not previously confirmed, print count to slack
+      if (!previouslyConfirmed) { request.slack.count(); }
+
+      // TODO: update stripe with new email
+
+      // return status 200
+      return h.response().code(200);
+    }
+    catch (err) { return Boom.badImplementation(err); }
   }
 };
 
-function getUser(request, reply) {
+async function getUser (request, h) {
   let userId = request.payload.accountId;
   let columns = ['id', 'email', 'confirmed', 'pending_email', 'pending_email_confirmation_token'];
-  let promise = request.db.select(columns).from('users').where({ id: userId })
-  .then((data) => {
-    if (data.length) { return data[0]; }
-    else { return Boom.badRequest('User Not Found'); }
-  });
-  return reply(promise);
+  let result = await request.db.select(columns).from('users').where({ id: userId });
+  if (result.length) { return result[0]; }
+  else { return Boom.badRequest('User Not Found'); }
 }
 
-function updateConfirmedCount(db) {
+async function updateConfirmedCount (db) {
   return db('user_counters').where({ type: 'confirmed' }).increment('count');
 }

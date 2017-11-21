@@ -3,50 +3,50 @@ const Boom = require('boom');
 module.exports = {
   method: 'GET',
   path: '/api/v1/location/list/{type}',
-  config: { auth: false },
-  handler: (request, reply) => {
+  options: { auth: false },
+  handler: async (request, h) => {
     let type = request.params.type;
 
     let out = {};
     switch (type) {
-      case "developer":
-        out = addLocationsOfType(out, "developer", true);
-        out = addLocationsOfType(out, "staff", true);
-        out = addLocationsOfType(out, "premium", true);
-        out = addLocationsOfType(out, "free", true);
+      case 'developer':
+        out = addLocationsOfType(out, 'developer', true);
+        out = addLocationsOfType(out, 'staff', true);
+        out = addLocationsOfType(out, 'premium', true);
+        out = addLocationsOfType(out, 'free', true);
         break;
-      case "staff":
-        out = addLocationsOfType(out, "staff", true);
-        out = addLocationsOfType(out, "premium", true);
-        out = addLocationsOfType(out, "free", true);
+      case 'staff':
+        out = addLocationsOfType(out, 'staff', true);
+        out = addLocationsOfType(out, 'premium', true);
+        out = addLocationsOfType(out, 'free', true);
         break;
-      case "premium":
-      case "family":
-      case "enterprise":
-        out = addLocationsOfType(out, "premium", true);
-        out = addLocationsOfType(out, "free", true);
+      case 'premium':
+      case 'family':
+      case 'enterprise':
+        out = addLocationsOfType(out, 'premium', true);
+        out = addLocationsOfType(out, 'free', true);
         break;
-      case "free":
-        out = addLocationsOfType(out, "premium", false);
-        out = addLocationsOfType(out, "free", true);
+      case 'free':
+        out = addLocationsOfType(out, 'premium', false);
+        out = addLocationsOfType(out, 'free', true);
         break;
-      case "pending":
-      case "invitation":
-      case "expired":
-        out = addLocationsOfType(out, "premium", false);
-        out = addLocationsOfType(out, "free", false);
+      case 'pending':
+      case 'invitation':
+      case 'expired':
+        out = addLocationsOfType(out, 'premium', false);
+        out = addLocationsOfType(out, 'free', false);
         break;
       default:
         out = Boom.notFound();
     }
 
     // return the location list
-    return reply(out);
+    return out;
   }
 };
 
 
-function addLocationsOfType(out, type, enabled) {
+function addLocationsOfType (out, type, enabled) {
   let id;
   for (id in locations[type]) {
     out[id] = locations[type][id];
@@ -164,7 +164,7 @@ const locations = {
       socksDefault: ['82.221.133.184']
     },
     newyork: {
-      "default": true,
+      default: true,
       id: 'newyork',
       region: 'NA',
       country: 'US',

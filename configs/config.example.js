@@ -7,6 +7,11 @@ module.exports = {
     cert: '',
     key: ''
   },
+  postgres: {
+    database: 'cypherpunk_dev',
+    user: '',
+    password: ''
+  },
   // logging
   logging: {
     reporters: {

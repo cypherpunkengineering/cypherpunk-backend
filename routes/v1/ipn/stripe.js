@@ -4,12 +4,12 @@ const Boom = require('boom');
 module.exports = {
   method: 'POST',
   path: '/api/v1/ipn/stripe',
-  config: {
+  options: {
     auth: false,
     payload: { parse: false },
     pre: [ { method: validateWebhook, assign: 'payload' } ]
   },
-  handler: (request, reply) => {
+  handler: async (request, h) => {
     // stripe webhook body
     let payload = request.pre.payload;
 
@@ -20,35 +20,33 @@ module.exports = {
     }
     let user, subscription;
 
-    console.log("IPN", payload.type);
+    console.log('IPN', payload.type);
 
-    let promise = Promise.all([
+    return Promise.all([
       stripeCustomerId && request.db('stripe_customers').where({ stripe_id: stripeCustomerId }).join('users', 'stripe_customers.user_id', 'users.id').first(),
-      stripeSubscriptionId && request.db('stripe_subscriptions').where({ stripe_id: stripeSubscriptionId }).join('subscriptions', 'stripe_subscriptions.subscription_id', 'subscriptions.id').first(),
+      stripeSubscriptionId && request.db('stripe_subscriptions').where({ stripe_id: stripeSubscriptionId }).join('subscriptions', 'stripe_subscriptions.subscription_id', 'subscriptions.id').first()
     ])
-    .then(arr => { [ user, subscription] = arr; })
-    .then(() =>{
-      //console.log("IPN", payload);
-      //console.log("user", user, "subscription", subscription);
-      switch (payload.type) {
-        case 'invoice.payment_succeeded':
-          console.log(payload.data.object);
-          return request.subscriptions.recordSuccessfulPayment({
-            subscription_id: subscription.id,
-            provider: 'stripe',
-            transaction_id: payload.data.object.charge || payload.data.object.invoice || payload.id,
-            user_id: user.id,
-            plan_id: subscription.plan_id,
-            currency: (payload.data.object.currency || 'USD').toUpperCase(),
-            amount: (payload.data.object.total / 100).toFixed(2),
-            date: new Date(payload.data.object.period_start * 1000),
-            data: payload,
-          });
-      }
-    })
-    .catch(err => { console.error(err); throw err; });
-
-    reply(promise);
+      .then(arr => { [user, subscription] = arr; })
+      .then(() => {
+        // console.log("IPN", payload);
+        // console.log("user", user, "subscription", subscription);
+        switch (payload.type) {
+          case 'invoice.payment_succeeded':
+            console.log(payload.data.object);
+            return request.subscriptions.recordSuccessfulPayment({
+              subscription_id: subscription.id,
+              provider: 'stripe',
+              transaction_id: payload.data.object.charge || payload.data.object.invoice || payload.id,
+              user_id: user.id,
+              plan_id: subscription.plan_id,
+              currency: (payload.data.object.currency || 'USD').toUpperCase(),
+              amount: (payload.data.object.total / 100).toFixed(2),
+              date: new Date(payload.data.object.period_start * 1000),
+              data: payload
+            });
+        }
+      })
+      .catch(err => { console.error(err); throw err; });
 
     /*
     switch (payload.type) {
@@ -93,8 +91,8 @@ module.exports = {
   }
 };
 
-function sendSlackNotification(slack, data, user) {
-  let msg = "[*Stripe*] ";
+function sendSlackNotification (slack, data, user) {
+  let msg = '[*Stripe*] ';
 
   switch (data.type) {
     case 'charge.succeeded':
@@ -112,11 +110,11 @@ function sendSlackNotification(slack, data, user) {
     msg += `\rCypherpunk account: ${user.email} (${user.type})`;
   }
 
-	// send to slack
-	slack.billing(msg);
+  // send to slack
+  slack.billing(msg);
 }
 
-function onChargeSucceeded(request, payload, user) {
+function onChargeSucceeded (request, payload, user) {
   // ensure stripe data object is attached
   let chargeData = payload.data.object;
   if (!chargeData) { return console.log('Stripe Data Object incomplete'); }
@@ -147,24 +145,22 @@ function onChargeSucceeded(request, payload, user) {
     amount: plan.price,
     data: payload
   }).into('charges').returning('*')
-  .catch((e) => { console.log(e); });
+    .catch((e) => { console.log(e); });
 
   sendSlackNotification(request.slack, payload, user);
 }
 
-function validateWebhook(request, reply) {
+function validateWebhook (request, h) {
   let payload = request.payload.toString('utf8');
   let stripeHeaderSig = request.headers['stripe-signature'];
-  let returnValue;
-  let promise = Promise.resolve()
-  .then(() => JSON.parse(payload))
-  .then(json => {
-    if (!json.livemode) {
-      if (configs.env === 'DEV') return json;
-      throw new Error("Received test stripe notification on live server");
-    }
-    return request.stripe.verify_webhook(payload, stripeHeaderSig).then(() => json);
-  })
-  .catch((e) => { return Boom.badRequest(e.message); });
-  return reply(promise);
+  return Promise.resolve()
+    .then(() => JSON.parse(payload))
+    .then(json => {
+      if (!json.livemode) {
+        if (configs.env === 'DEV') return json;
+        throw new Error('Received test stripe notification on live server');
+      }
+      return request.stripe.verify_webhook(payload, stripeHeaderSig).then(() => json);
+    })
+    .catch((e) => { return Boom.badRequest(e.message); });
 }

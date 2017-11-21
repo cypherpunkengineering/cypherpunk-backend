@@ -4,7 +4,7 @@ const Boom = require('boom');
 module.exports = {
   method: 'POST',
   path: '/api/v1/account/confirm/email',
-  config: {
+  options: {
     auth: false,
     validate: {
       payload: {
@@ -15,53 +15,49 @@ module.exports = {
     // get user attached to this account id
     pre: [ { method: getUser, assign: 'user' } ]
   },
-  handler: (request, reply) => {
+  handler: async (request, h) => {
     let user = request.pre.user;
 
     // check if user is already confirmed
-    if (user.confirmed) { return reply(); }
+    if (user.confirmed) { return h.response().code(200); }
 
     // check that the confirmation key matches db value
-    if (!user.confirmation_token) { return reply(Boom.badImplementation('No Token Found')); }
+    if (!user.confirmation_token) { return Boom.badImplementation('No Token Found'); }
     if (user.confirmation_token !== request.payload.confirmationToken) {
-      return reply(Boom.badRequest('Invalid Confirmation Token'));
+      return Boom.badRequest('Invalid Confirmation Token');
     }
 
-    // update user account to confirmed
-    let promise = request.db('users').update({
-      confirmed: true,
-      confirmation_token: null
-    }).where({ id: user.id })
-    // TODO: enable radius?
-    // notify slack of new confirmation
-    .then(() => {
-      let text = `[CONFIRM] User ${user.email} has been confirmed :sunglasses:`;
-      request.slack.billing(text); // TODO catch and print?
-    })
-    // update count
-    .then(() => { return updateConfirmedCount(request.db); })
-    // print count to slack
-    .then(() => { request.slack.count(); }) // TODO catch and print?
-    .catch((err) => {
-      console.log(err);
-      if (err.isBoom) { return err; }
-      else { return Boom.badImplementation(err); }
-    });
-    return reply(promise);
+    try {
+      // update user account to confirmed
+      let updatedUser = { confirmed: true, confirmation_token: null };
+      await request.db('users').update(updatedUser).where({ id: user.id });
+
+      // TODO: enable radius?
+
+      // notify slack of new confirmation
+      request.slack.billing(`[CONFIRM] User ${user.email} has been confirmed`);
+
+      // update count
+      await updateConfirmedCount(request.db);
+
+      // print count to slack
+      request.slack.count();
+
+      // return status 200
+      return h.response.code(200);
+    }
+    catch (err) { return Boom.badImplementation(err); }
   }
 };
 
-function getUser(request, reply) {
+async function getUser (request, h) {
   let userId = request.payload.accountId;
   let columns = ['id', 'email', 'confirmed', 'confirmation_token'];
-  let promise = request.db.select(columns).from('users').where({ id: userId })
-  .then((data) => {
-    if (data.length) { return data[0]; }
-    else { return Boom.badRequest('User Not Found'); }
-  });
-  return reply(promise);
+  let result = await request.db.select(columns).from('users').where({ id: userId });
+  if (result.length) { return result[0]; }
+  else { return Boom.badRequest('User Not Found'); }
 }
 
-function updateConfirmedCount(db) {
+async function updateConfirmedCount (db) {
   return db('user_counters').where({ type: 'confirmed' }).increment('count');
 }

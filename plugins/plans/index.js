@@ -265,12 +265,12 @@ const plansTest = {
 };
 
 const planNames = {
-  monthly: "Cypherpunk Privacy Monthly Plan",
-  semiannually: "Cypherpunk Privacy Semiannual Plan",
-  annually: "Cypherpunk Privacy Yearly Plan"
+  monthly: 'Cypherpunk Privacy Monthly Plan',
+  semiannually: 'Cypherpunk Privacy Semiannual Plan',
+  annually: 'Cypherpunk Privacy Yearly Plan'
 };
 
-function applyIdAndTypeAndName(plans) {
+function applyIdAndTypeAndName (plans) {
   for (var type in plans) {
     if (!plans.hasOwnProperty(type)) continue;
     for (var id in plans[type]) {

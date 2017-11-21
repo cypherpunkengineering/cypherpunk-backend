@@ -72,7 +72,7 @@ internals.implementation = function (server, options) {
       const self = this;
 
       this.set = function (session, value) {
-        const reply = self.reply;
+        const h = self.h;
 
         if (arguments.length > 1) {
           const key = session;
@@ -81,34 +81,34 @@ internals.implementation = function (server, options) {
           Hoek.assert(session, 'No active session to apply key to');
 
           session[key] = value;
-          return reply.state(settings.cookie, session);
+          return h.state(settings.cookie, session);
         }
 
         Hoek.assert(session && typeof session === 'object', 'Invalid session');
         request.auth.artifacts = session;
-        reply.state(settings.cookie, session);
+        h.state(settings.cookie, session);
       };
 
       this.clear = function (key) {
-        const reply = self.reply;
+        const h = self.h;
 
         if (arguments.length) {
           Hoek.assert(key && typeof key === 'string', 'Invalid session key');
           const session = request.auth.artifacts;
           Hoek.assert(session, 'No active session to clear key from');
           delete session[key];
-          return reply.state(settings.cookie, session);
+          return h.state(settings.cookie, session);
         }
 
         request.auth.artifacts = null;
-        reply.unstate(settings.cookie);
+        h.unstate(settings.cookie);
       };
 
       this.ttl = function (msecs) {
-        const reply = self.reply;
+        const h = self.h;
         const session = request.auth.artifacts;
         Hoek.assert(session, 'No active session to modify ttl on');
-        reply.state(settings.cookie, session, { ttl: msecs });
+        h.state(settings.cookie, session, { ttl: msecs });
       };
     };
 
