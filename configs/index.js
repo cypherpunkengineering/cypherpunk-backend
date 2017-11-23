@@ -58,7 +58,7 @@ config.auth = function (server) {
       try {
         const cached = await cache.get(session.sid);
         out.valid = !!cached;
-        if (out.valid) { out.credentials = cached.account; }
+        if (out.valid) { out.credentials = cached; }
       }
       catch (err) { out.valid = false; }
       return out;

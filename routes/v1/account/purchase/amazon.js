@@ -6,7 +6,7 @@ const randToken = require('rand-token');
 module.exports = {
   method: 'POST',
   path: '/api/v1/account/purchase/amazon',
-  config: {
+  options: {
     auth: { strategy: 'session', mode: 'try' },
     validate: {
       payload: {
@@ -22,40 +22,38 @@ module.exports = {
       { method: checkEmail }
     ]
   },
-  handler: (request, reply) => {
+  handler: async (request, h) => {
     // get plan based on request.payload.plan
     let planType = request.plans.getPricingPlanType(request.payload.plan);
-    if (!planType) { return reply(Boom.badRequest('Invalid Plan')); }
+    if (!planType) { return Boom.badRequest('Invalid Plan'); }
     console.log('PlanType: ', planType);
 
     // get stripePlan based on request.payload.plan
     let planId = request.plans.defaultPlanId[request.payload.plan];
-    if (!planId) { return reply(Boom.badRequest('Invalid Plan')); }
+    if (!planId) { return Boom.badRequest('Invalid Plan'); }
     console.log('PlanId: ', planId);
 
     let plan = request.plans.getPlanByTypeAndID(planType, planId);
-    if (!plan || !plan.price) { return reply(Boom.badRequest('Invalid Plan')); }
+    if (!plan || !plan.price) { return Boom.badRequest('Invalid Plan'); }
     console.log('Plan: ', plan);
 
     // generate subscriptino renewal date
     let subscriptionRenewal = request.subscriptions.calculateRenewal(planId);
     if (!subscriptionRenewal) {
-      return reply(Boom.badImplementation('Unable to calculate subscription renewal'));
+      return Boom.badImplementation('Unable to calculate subscription renewal');
     }
     console.log('Subscription Renewal: ', subscriptionRenewal);
 
-    // amazon args
-    let amazonArgs = {
-      plan: planId,
-      AmazonBillingAgreementId: request.payload.AmazonBillingAgreementId
-    };
+    try {
+      // confirm amazon billing agreement
+      let amazonArgs = {
+        plan: planId,
+        AmazonBillingAgreementId: request.payload.AmazonBillingAgreementId
+      };
+      await request.amazon.confirmBillingAgreement(amazonArgs);
 
-    // confirm amazon billing agreement
-    let user, subscription, authorizeArgs;
-    let promise = request.amazon.confirmBillingAgreement(amazonArgs)
-    // save user account
-    .then(() => {
-      user = {
+      // save user account
+      let user = {
         email: request.payload.email.toLowerCase(),
         password: bcrypt.hashSync(request.payload.password, 15),
         secret: randToken.generate(32),
@@ -64,32 +62,29 @@ module.exports = {
         confirmed: false,
         confirmation_token: randToken.generate(32)
       };
-      return request.db.insert(user).into('users').returning('*')
-      .then((data) => { user = data[0]; }); // hold on to user data
-    })
-    // send amazon auth request
-    .then(() => {
-      // prepare arguments for authorization API call
-      authorizeArgs = {
+      user = await request.db.insert(user).into('users').returning('*');
+      user = user[0];
+
+      // send amazon auth request
+      let authorizeArgs = {
         AmazonBillingAgreementId: request.payload.AmazonBillingAgreementId,
         currency: 'USD',
         price: plan.price,
         authorizationReference: randToken.generate(32),
         userId: user.id
       };
-      return request.amazon.authorizeOnBillingAgreement(authorizeArgs);
-    })
-    // create amazon object in db
-    .then(() => {
-      return request.db.insert({
+      await request.amazon.authorizeOnBillingAgreement(authorizeArgs);
+
+      // create amazon object in db
+      let amazonObject = {
         billing_agreement_id: request.payload.AmazonBillingAgreementId,
         amazon_data: authorizeArgs
-      }).into('amazon').returning('*')
-      .then((data) => { return data[0]; });
-    })
-    // create subscription
-    .then((provider) => {
-      subscription = {
+      };
+      let provider = await request.db.insert(amazonObject).into('amazon').returning('*');
+      provider = provider[0];
+
+      // create subscription
+      let subscription = {
         user_id: user.id,
         type: planType,
         plan_id: planId,
@@ -103,12 +98,11 @@ module.exports = {
         current_period_start_timestamp: new Date(),
         current_period_end_timestamp: subscriptionRenewal
       };
-      return request.db.insert(subscription).into('subscriptions').returning('*')
-      .then((data) => { subscription = data[0]; });
-    })
-    // create charge
-    .then(() => {
-      return request.db.insert({
+      subscription = await request.db.insert(subscription).into('subscriptions').returning('*');
+      subscription = subscription[0];
+
+      // create charge
+      let charge = {
         gateway: 'amazon',
         transaction_id: authorizeArgs.authorizationReference,
         user_id: user.id,
@@ -117,53 +111,47 @@ module.exports = {
         currency: 'USD',
         amount: plan.price,
         data: authorizeArgs
-      }).into('charges').returning('*');
-    })
-    // create session and cookie for user
-    .then(() => {
-      return new Promise((resolve, reject) => {
-        // set session? cookie? I forget.
-        let cachedUser = { id: user.id, email: user.email.toLowerCase(), type: user.type };
-        request.server.app.cache.set('user:' + user.id, cachedUser, 0, (err) => {
-          if (err) { return reject(err); }
-          request.cookieAuth.set({ sid: 'user:' + user.id });
-          return resolve();
-        });
-      });
-    })
-    // create radius tokens
-    .then(() => {
-      let username = request.radius.makeRandomString(26),
-          password = request.radius.makeRandomString(26);
-      return request.radius.addToken(user.id, username, password)
-      .then(() => { return request.radius.addTokenGroup(username, user.type); });
-    })
-    // send welcome email
-    .then(() => {
+      };
+      await request.db.insert(charge).into('charges').returning('*');
+
+      // create session and cookie for user
+      let cachedUser = { id: user.id, email: user.email.toLowerCase(), type: user.type };
+      await request.server.app.cache.set('user:' + user.id, cachedUser, 0);
+      request.cookieAuth.set({ sid: 'user:' + user.id });
+
+      // create radius tokens
+      let username = request.radius.makeRandomString(26);
+      let password = request.radius.makeRandomString(26);
+      await request.radius.addToken(user.id, username, password);
+      await request.radius.addTokenGroup(username, user.type);
+
+      // send welcome email
       let msg = { to: user.email, id: user.id, confirmationToken: user.confirmation_token };
-      request.mailer.registration(msg); // TODO catch and print?
-    })
-    // notify slack of new signup
-    .then(() => {
-      let text = `[SIGNUP] ${user.email} has signed up for an account :highfive:`;
-      request.slack.billing(text); // TODO catch and print?
-    })
-    // update count
-    .then(() => { return updateRegisteredCount(request.db); })
-    // print count to slack
-    .then(() => { request.slack.count(); }) // TODO catch and print?
-    .catch((err) => { return Boom.badImplementation(err); });
-    return reply(promise);
+      await request.mailer.registration(msg);
+
+      // notify slack of new signup
+      request.slack.billing(`[SIGNUP] ${user.email} has signed up for an account`);
+
+      // update count
+      await updateRegisteredCount(request.db);
+
+      // print count to slack
+      request.slack.count();
+
+      // return status 200
+      return h.response().code(200);
+    }
+    catch (err) { return Boom.badImplementation(err); }
   }
 };
 
-function updateRegisteredCount(db) {
+async function updateRegisteredCount (db) {
   return db('user_counters').where({ type: 'registered' }).increment('count');
 }
 
-function logout(request, reply) {
+async function logout (request, h) {
   // skip if not authenticated
-  if (!request.auth.isAuthenticated) { return reply(); }
+  if (!request.auth.isAuthenticated) { return true; }
 
   // otherwise get user from request.auth;
   let user = request.auth.credentials;
@@ -172,18 +160,13 @@ function logout(request, reply) {
   request.cookieAuth.clear();
 
   // delete session in cache
-  request.server.app.cache.drop('user:' + user.id, (err) => {
-    if (err) { return reply(Boom.badImplementation('Delete Session Error')); }
-    else { return reply(); }
-  });
+  try { return await request.server.app.cache.drop('user:' + user.id); }
+  catch (err) { return Boom.badImplementation('Delete Session Error'); }
 }
 
-function checkEmail(request, reply) {
+async function checkEmail (request, h) {
   let email = request.payload.email.toLowerCase();
-  let promise = request.db.select('id').from('users').where({ email: email })
-  .then((data) => {
-    if (data.length) { return Boom.badRequest('Email already in use'); }
-    else { return; }
-  });
-  return reply(promise);
+  let result = await request.db.select('id').from('users').where({ email: email });
+  if (result.length) { return Boom.badRequest('Email already in use'); }
+  else { return true; }
 }

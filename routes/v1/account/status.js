@@ -3,11 +3,16 @@ const Boom = require('boom');
 module.exports = {
   method: 'GET',
   path: '/api/v1/account/status',
-  config: { auth: { mode: 'required' } },
-  handler: (request, reply) => {
-    let userId = request.auth.credentials.id;
-    let promise = request.account.makeStatusResponse({ request, userId })
-    .catch(err => Boom.badRequest('Invalid User'));
-    return reply(promise);
+  options: { auth: { mode: 'required' } },
+  handler: async (request, h) => {
+    try {
+      // build response data
+      let userId = request.auth.credentials.id;
+      return await request.account.makeStatusResponse({ request, userId });
+    }
+    catch (err) {
+      console.log(err);
+      return Boom.badRequest('Invalid User: ', err);
+    }
   }
 };

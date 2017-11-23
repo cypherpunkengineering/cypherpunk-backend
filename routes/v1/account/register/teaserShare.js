@@ -5,7 +5,7 @@ const randToken = require('rand-token');
 module.exports = {
   method: 'POST',
   path: '/api/v1/account/register/teaserShare',
-  config: {
+  options: {
     auth: { strategy: 'session', mode: 'required' },
     validate: {
       payload: {
@@ -16,35 +16,33 @@ module.exports = {
     // check if email already exists before handler
     pre: [ { method: checkEmail } ]
   },
-  handler: (request, reply) => {
+  handler: async (request, h) => {
     let referralId = request.auth.credentials.id;
     let referralName = request.payload.name || null;
 
-    // create user
-    let user = {
-      email: request.payload.email.toLowerCase(),
-      secret: randToken.generate(32),
-      type: 'invitation',
-      priority: 1,
-      confirmed: false,
-      recovery_token: randToken.generate(32),
-      referral_id: referralId,
-      referral_name: referralName
-    };
-    let promise = request.db.insert(user).into('users').returning('*')
-    .then((data) => {
-      if (data.length) { user = data[0]; }
-      else { throw new Error('Could not create user'); }
-    })
-    // create radius tokens
-    .then(() => {
-      let username = request.radius.makeRandomString(26),
-          password = request.radius.makeRandomString(26);
-      return request.radius.addToken(user.id, username, password)
-      .then(() => { return request.radius.addTokenGroup(username, user.type); });
-    })
-    // send teaserShare email
-    .then(() => {
+    try {
+      // create user
+      let user = {
+        email: request.payload.email.toLowerCase(),
+        secret: randToken.generate(32),
+        type: 'invitation',
+        priority: 1,
+        confirmed: false,
+        recovery_token: randToken.generate(32),
+        referral_id: referralId,
+        referral_name: referralName
+      };
+      let result = await request.db.insert(user).into('users').returning('*');
+      if (result.length) { user = result[0]; }
+      else { return Boom.badRequest('Could not create user'); }
+
+      // create radius tokens
+      let username = request.radius.makeRandomString(26);
+      let password = request.radius.makeRandomString(26);
+      await request.radius.addToken(user.id, username, password);
+      await request.radius.addTokenGroup(username, user.type);
+
+      // send teaserShare email
       let msg = {
         to: user.email,
         id: user.id,
@@ -52,33 +50,31 @@ module.exports = {
         referralId: referralId,
         referralName: referralName
       };
-      request.mailer.teaserShare(msg)
-      .catch((e) => { console.log(e); });
-    })
-    // notify slack of new signup
-    .then(() => {
-      let text = `[QUEUE] ${user.email} was given an invitation :highfive:`;
-      request.slack.billing(text);
-    })
-    // update count
-    .then(() => { return updateRegisteredCount(request.db); })
-    // print count to slack
-    .then(() => { request.slack.count(); })
-    .catch((err) => { return Boom.badImplementation(err); });
-    return reply(promise);
+      await request.mailer.teaserShare(msg);
+
+      // notify slack of new signup
+      request.slack.billing(`[QUEUE] ${user.email} was given an invitation`);
+
+      // update registered count
+      await updateRegisteredCount(request.db);
+
+      // print count to slack
+      request.slack.count();
+
+      // return status 200
+      return h.response().code(200);
+    }
+    catch (err) { return Boom.badImplementation(err); }
   }
 };
 
-function checkEmail(request, reply) {
+async function checkEmail (request, h) {
   let email = request.payload.email.toLowerCase();
-  let promise = request.db.select('id').from('users').where({ email: email })
-  .then((data) => {
-    if (data.length) { return Boom.badRequest('Email already in use'); }
-    else { return; }
-  });
-  return reply(promise);
+  let result = await request.db.select('id').from('users').where({ email: email });
+  if (result.length) { return Boom.badRequest('Email already in use'); }
+  else { return true; }
 }
 
-function updateRegisteredCount(db) {
+async function updateRegisteredCount (db) {
   return db('user_counters').where({ type: 'registered' }).increment('count');
 }

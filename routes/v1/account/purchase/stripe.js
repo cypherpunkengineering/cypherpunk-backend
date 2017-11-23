@@ -6,7 +6,7 @@ const randToken = require('rand-token');
 module.exports = {
   method: 'POST',
   path: '/api/v1/account/purchase/stripe',
-  config: {
+  options: {
     auth: { strategy: 'session', mode: 'try' },
     validate: {
       payload: {
@@ -22,38 +22,35 @@ module.exports = {
       { method: checkEmail }
     ]
   },
-  handler: (request, reply) => {
+  handler: async (request, h) => {
     // get plan based on request.payload.plan
     let planType = request.plans.getPricingPlanType(request.payload.plan);
-    if (!planType) { return reply(Boom.badRequest('Invalid Plan')); }
+    if (!planType) { return Boom.badRequest('Invalid Plan'); }
     console.log('PlanType: ', planType);
 
     // get stripePlan based on request.payload.plan
     let stripePlanId = request.plans.getStripePlanIdForReferralCode(request.payload.plan);
-    if (!stripePlanId) { return reply(Boom.badRequest('Invalid Plan')); }
+    if (!stripePlanId) { return Boom.badRequest('Invalid Plan'); }
     console.log('StripePlanId: ', stripePlanId);
 
     // generate subscriptino renewal date
     let subscriptionRenewal = request.subscriptions.calculateRenewal(stripePlanId);
     if (!subscriptionRenewal) {
-      return reply(Boom.badImplementation('Unable to calculate subscription renewal'));
+      return Boom.badImplementation('Unable to calculate subscription renewal');
     }
     console.log('Subscription Renewal: ', subscriptionRenewal);
 
-    // stripe args
-    let stripeArgs = {
-      plan: stripePlanId,
-      source: request.payload.token,
-      email: request.payload.email.toLowerCase()
-    };
+    try {
+      // create stripe account
+      let stripeArgs = {
+        plan: stripePlanId,
+        source: request.payload.token,
+        email: request.payload.email.toLowerCase()
+      };
+      let customer = await request.stripe.api.customers.create(stripeArgs);
 
-    // create stripe account
-    let customer, user, subscription;
-    let promise = request.stripe.api.customers.create(stripeArgs)
-    .then((stripeCustomer) => { customer = stripeCustomer; })
-    // save user account
-    .then(() => {
-      user = {
+      // create user account
+      let user = {
         email: request.payload.email.toLowerCase(),
         password: bcrypt.hashSync(request.payload.password, 15),
         secret: randToken.generate(32),
@@ -62,11 +59,10 @@ module.exports = {
         confirmed: false,
         confirmation_token: randToken.generate(32)
       };
-      return request.db.insert(user).into('users').returning('*')
-      .then((data) => { user = data[0]; }); // hold on to user data
-    })
-    // create stripe source objects
-    .then(() => {
+      user = await request.db.insert(user).into('users').returning('*');
+      user = user[0];
+
+      // create stripe source objects
       let promises = [];
       customer.sources.data.forEach((card) => {
         let cardPromise = request.db.insert({
@@ -79,24 +75,20 @@ module.exports = {
         }).into('stripe_sources');
         promises.push(cardPromise);
       });
-      return Promise.all(promises);
-    })
-    // create stripe object
-    .then(() => {
-      return request.db.insert({
-        customer_id: customer.id,
-        stripe_data: customer
-      }).into('stripe').returning('*')
-      .then((data) => { return data[0]; });
-    })
-    // create subscription
-    .then((stripeObj) => {
-      subscription = {
+      await Promise.all(promises);
+
+      // create stripe object
+      let stripeData = { customer_id: customer.id, stripe_data: customer };
+      let stripeObject = await request.db.insert(stripeData).into('stripe').returning('*');
+      stripeObject = stripeObject[0];
+
+      // create subscription
+      let subscription = {
         user_id: user.id,
         type: planType,
         plan_id: stripePlanId,
         provider: 'stripe',
-        provider_id: stripeObj.id,
+        provider_id: stripeObject.id,
         active: true,
         current: true,
         start_timestamp: new Date(),
@@ -105,54 +97,45 @@ module.exports = {
         current_period_start_timestamp: new Date(),
         current_period_end_timestamp: subscriptionRenewal
       };
-      return request.db.insert(subscription).into('subscriptions').returning('*')
-      .then((data) => { subscription = data[0]; });
-    })
-    // create session and cookie for user
-    .then(() => {
-      return new Promise((resolve, reject) => {
-        // set session? cookie? I forget.
-        let cachedUser = { id: user.id, email: user.email.toLowerCase(), type: user.type };
-        request.server.app.cache.set('user:' + user.id, cachedUser, 0, (err) => {
-          if (err) { return reject(err); }
-          request.cookieAuth.set({ sid: 'user:' + user.id });
-          return resolve();
-        });
-      });
-    })
-    // create radius tokens
-    .then(() => {
-      let username = request.radius.makeRandomString(26),
-          password = request.radius.makeRandomString(26);
-      return request.radius.addToken(user.id, username, password)
-      .then(() => { return request.radius.addTokenGroup(username, user.type); });
-    })
-    // send welcome email
-    .then(() => {
+      await request.db.insert(subscription).into('subscriptions').returning('*');
+
+      // create session and cookie for user
+      let cachedUser = { id: user.id, email: user.email.toLowerCase(), type: user.type };
+      await request.server.app.cache.set('user:' + user.id, cachedUser, 0);
+      request.cookieAuth.set({ sid: 'user:' + user.id });
+
+      // create radius tokens
+      let username = request.radius.makeRandomString(26);
+      let password = request.radius.makeRandomString(26);
+      await request.radius.addToken(user.id, username, password);
+      await request.radius.addTokenGroup(username, user.type);
+
+      // send welcome email
       let msg = { to: user.email, id: user.id, confirmationToken: user.confirmation_token };
-      request.mailer.registration(msg); // TODO catch and print?
-    })
-    // notify slack of new signup
-    .then(() => {
-      let text = `[SIGNUP] ${user.email} has signed up for an account :highfive:`;
-      request.slack.billing(text); // TODO catch and print?
-    })
-    // update count
-    .then(() => { return updateRegisteredCount(request.db); })
-    // print count to slack
-    .then(() => { request.slack.count(); }) // TODO catch and print?
-    .catch((err) => { return Boom.badImplementation(err); });
-    return reply(promise);
+      await request.mailer.registration(msg);
+
+      // notify slack of new signup
+      request.slack.billing(`[SIGNUP] ${user.email} has signed up for an account`);
+
+      // update count
+      await updateRegisteredCount(request.db);
+
+      // print count to slack
+      request.slack.count();
+
+      return h.response().code(200);
+    }
+    catch (err) { return Boom.badImplementation(err); }
   }
 };
 
-function updateRegisteredCount(db) {
+function updateRegisteredCount (db) {
   return db('user_counters').where({ type: 'registered' }).increment('count');
 }
 
-function logout(request, reply) {
+async function logout (request, h) {
   // skip if not authenticated
-  if (!request.auth.isAuthenticated) { return reply(); }
+  if (!request.auth.isAuthenticated) { return true; }
 
   // otherwise get user from request.auth;
   let user = request.auth.credentials;
@@ -161,18 +144,13 @@ function logout(request, reply) {
   request.cookieAuth.clear();
 
   // delete session in cache
-  request.server.app.cache.drop('user:' + user.id, (err) => {
-    if (err) { return reply(Boom.badImplementation('Delete Session Error')); }
-    else { return reply(); }
-  });
+  try { return await request.server.app.cache.drop('user:' + user.id); }
+  catch (err) { return Boom.badImplementation('Delete Session Error'); }
 }
 
-function checkEmail(request, reply) {
+async function checkEmail (request, h) {
   let email = request.payload.email.toLowerCase();
-  let promise = request.db.select('id').from('users').where({ email: email })
-  .then((data) => {
-    if (data.length) { return Boom.badRequest('Email already in use'); }
-    else { return; }
-  });
-  return reply(promise);
+  let result = await request.db.select('id').from('users').where({ email: email });
+  if (result.length) { return Boom.badRequest('Email already in use'); }
+  else { return true; }
 }

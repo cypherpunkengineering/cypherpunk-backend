@@ -16,7 +16,7 @@ module.exports = {
       }
     },
     // check if email already exists before handler
-    pre: [ { method: checkEmail, assign: 'user' } ]
+    pre: [ { method: checkEmail } ]
   },
   handler: async (request, h) => {
     // functional scoped variables
@@ -111,7 +111,7 @@ async function checkEmail (request, h) {
   try {
     let user = await request.db.select().from('users').where({ email: email }).first();
     if (user) { return Boom.badRequest('Email already in use'); }
-    else { return {}; }
+    else { return true; }
   }
   catch (err) { return Boom.badImplementation(err); }
 }

@@ -6,7 +6,7 @@ const randToken = require('rand-token');
 module.exports = {
   method: 'POST',
   path: '/api/v1/account/change/email',
-  config: {
+  options: {
     auth: { strategy: 'session', mode: 'required' },
     validate: {
       payload: {
@@ -19,55 +19,47 @@ module.exports = {
       { method: currentUser, assign: 'user' } // get current user
     ]
   },
-  handler: (request, reply) => {
+  handler: async (request, h) => {
     let user = request.pre.user;
 
     // check if password is value
     let passwordValid = bcrypt.compareSync(request.payload.password, user.password);
-    if (!passwordValid) { return reply(Boom.badRequest('Invalid Credentials')); }
+    if (!passwordValid) { return Boom.badRequest('Invalid Credentials'); }
 
     // create pending_email & pending_email_confirmation_token
     user.pending_email = request.payload.email.toLowerCase();
     user.pendingToken = randToken.generate(32);
 
     // update db with new values
-    let promise = request.db('users').update({
-      pending_email: user.pending_email,
-      pending_email_confirmation_token: user.pendingToken
-    }).where({ id: user.id })
-    // send change email ... err ...  email
-    .then(() => {
+    try {
+      let updatedUser = {
+        pending_email: user.pending_email,
+        pending_email_confirmation_token: user.pendingToken
+      };
+      await request.db('users').update(updatedUser).where({ id: user.id });
+
+      // send email change ... err ... email
       let msg = { to: user.pending_email, id: user.id, pendingEmailToken: user.pendingToken };
-      request.mailer.changeEmail(msg); // TODO catch and print?
-    })
-    .catch((err) => {
-      console.log(err);
-      if (err.isBoom) { return err; }
-      else { return Boom.badImplementation(err); }
-    });
-    return reply(promise);
+      await request.mailer.changeEmail(msg);
+
+      // return status 200
+      return h.response().code(200);
+    }
+    catch (err) { return Boom.badImplementation(err); }
   }
 };
 
-function checkPendingEmails(request, reply) {
+async function checkPendingEmails (request, h) {
   let email = request.payload.email.toLowerCase();
-  let promise = request.db
-  .select(['id'])
-  .from('users')
-  .where({ email: email })
-  .orWhere({ pending_email: email })
-  .then((data) => {
-    if (data.length) { return Boom.badRequest('Email already in use'); }
-  });
-  return reply(promise);
+  let result = await request.db.select(['id']).from('users')
+    .where({ email: email }).orWhere({ pending_email: email });
+  if (result.length) { return Boom.badRequest('Email already in use'); }
+  else { return true; }
 }
 
-function currentUser(request, reply) {
+async function currentUser (request, h) {
   let id = request.auth.credentials.id;
-  let promise = request.db.select(['id', 'password']).from('users').where({ id: id })
-  .then((data) => {
-    if (data.length) { return data[0]; }
-    else { return Boom.unauthorized(); }
-  });
-  return reply(promise);
+  let result = await request.db.select(['id', 'password']).from('users').where({ id: id });
+  if (result.length) { return result[0]; }
+  else { return Boom.unauthorized(); }
 }

@@ -11,13 +11,13 @@ const planPeriods = {
  * Creates a payment request the caller can use to authorize a new PayPal
  * subscription, upon the completion of which the system will treat as
  * the new active subscription (canceling any other existing ones).
- * 
+ *
  * Returns a JSON object with the following fields: {
  *   code: raw html code for a button form (deprecated; shouldn't be used directly)
  *   action: the URL for the <form action> attribute (https://...)
  *   encrypted: the encrypted subscription descriptor to feed to PayPal
  * }
- * 
+ *
  * The caller should then submit a web form to PayPal (basically a checkout
  * button), which will redirect the user to paypal.com to authorize the
  * new subscription. Notifications for said subscription will be posted
@@ -27,22 +27,22 @@ const planPeriods = {
 module.exports = {
   method: 'POST',
   path: '/api/v1/account/payment/paypal',
-  config: {
+  options: {
     auth: { strategy: 'session', mode: 'required' },
     validate: {
       payload: {
         planId: Joi.string().required(),
         referralCode: Joi.string().optional(),
-        site: Joi.string().optional(),
+        site: Joi.string().optional()
       }
     },
     pre: [
       { method: getPlan, assign: 'plan' },
-      { method: getDelay, assign: 'delay' },
-    ],
+      { method: getDelay, assign: 'delay' }
+    ]
   },
-  handler: (request, reply) => {
-    let user_id = request.auth.credentials.id;
+  handler: async (request, h) => {
+    let userId = request.auth.credentials.id;
 
     let params = {
       plan: request.payload.planId,
@@ -51,25 +51,25 @@ module.exports = {
       period: planPeriods[request.pre.plan.type],
       delay: request.pre.delay,
       initial: 0,
-      custom: user_id,
+      custom: userId,
       returnURL: (request.payload.site || 'https://cypherpunk.com') + '/billing/complete/paypal',
-      cancelURL: (request.payload.site || 'https://cypherpunk.com') + '/billing/cancel/paypal',
+      cancelURL: (request.payload.site || 'https://cypherpunk.com') + '/billing/cancel/paypal'
     };
-    let promise = request.paypal.createSubscriptionButton(params);
+    return request.paypal.createSubscriptionButton(params);
     // TODO: log created button?
-    reply(promise);
   }
 };
 
-function getPlan(request, reply) {
-  //request.db.select('').from('plans').where('');
+async function getPlan (request, h) {
   let plan = request.plans.getPlanByID(request.payload.planId);
-  reply(plan || Boom.badRequest("Invalid plan"));
+  return plan || Boom.badRequest('Invalid plan');
 }
 
-function getDelay(request, reply) {
-  request.db.select('current_period_end_timestamp').from('subscriptions').where({ user_id: request.auth.credentials.id, current: true }).first()
-  .then(row => Math.max(0, Math.floor((row.current_period_end_timestamp - +new Date()) / 86400000)))
-  .catch(() => 0)
-  .then(delay => reply(delay));
+async function getDelay (request, h) {
+  try {
+    let row = await request.db.select('current_period_end_timestamp').from('subscriptions')
+      .where({ user_id: request.auth.credentials.id, current: true }).first();
+    return Math.max(0, Math.floor((row.current_period_end_timestamp - +new Date()) / 86400000));
+  }
+  catch (err) { return 0; }
 }
