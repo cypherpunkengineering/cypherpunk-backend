@@ -4,10 +4,10 @@ const authorizedUserTypes = [
   'staff'
 ];
 
-function isAuthorized (request, reply) {
+async function isAuthorized (request, h) {
   let userType = request.auth.credentials.type;
-  if (authorizedUserTypes.includes(userType)) { return reply(); }
-  else { return reply(Boom.forbidden()); }
+  if (authorizedUserTypes.includes(userType)) { return true; }
+  else { return Boom.forbidden(); }
 }
 
 module.exports = {

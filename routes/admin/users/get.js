@@ -4,15 +4,15 @@ const Boom = require('boom');
 module.exports = {
   method: 'GET',
   path: '/api/v1/admin/users/{id}',
-  config: {
+  options: {
     auth: { strategy: 'session', mode: 'required' },
     // auth: false,
     validate: {
       params: { id: Joi.string().optional() }
     },
-    pre: [ { method: 'isAuthorized' } ]
+    pre: [ { method: isAuthorized } ]
   },
-  handler: (request, reply) => {
+  handler: async (request, h) => {
     let userId = request.params.id;
 
     let promises = [
@@ -21,21 +21,21 @@ module.exports = {
     ];
 
     let promise = Promise.all(promises)
-    .then((values) => {
-      let account = values[0];
-      account.subscriptions = values[1];
-      return account;
-    })
-    .catch((e) => {
-      console.log(e);
-      if (e.isBoom) { return e; }
-      else { return Boom.badImplementation(e); }
-    });
-    return reply(promise);
+      .then((values) => {
+        let account = values[0];
+        account.subscriptions = values[1];
+        return account;
+      })
+      .catch((e) => {
+        console.log(e);
+        if (e.isBoom) { return e; }
+        else { return Boom.badImplementation(e); }
+      });
+    return promise;
   }
 };
 
-function getUserAccountInfo(db, userId) {
+async function getUserAccountInfo (db, userId) {
   let columns = [
     'id',
     'email',
@@ -44,19 +44,19 @@ function getUserAccountInfo(db, userId) {
     'deactivated',
     'created_at',
     'updated_at',
-    'last_login',
+    'last_login'
   ];
   return db
-  .select(columns)
-  .from('users')
-  .where({ id: userId })
-  .then((data) => {
-    if (data.length) { return data[0]; }
-    else { return Boom.notFound('User Not Found'); }
-  });
+    .select(columns)
+    .from('users')
+    .where({ id: userId })
+    .then((data) => {
+      if (data.length) { return data[0]; }
+      else { Promise.reject(Boom.notFound('User Not Found')); }
+    });
 }
 
-function getUserSubscriptions(db, userId) {
+async function getUserSubscriptions (db, userId) {
   return db.raw(`
     SELECT
       s.id,
@@ -95,5 +95,9 @@ function getUserSubscriptions(db, userId) {
     FROM subscriptions s
     WHERE s.user_id = ?
   `, [userId])
-  .then((response) => { return response.rows; });
+    .then((response) => { return response.rows; });
+}
+
+async function isAuthorized (request, h) {
+  return request.server.methods.isAuthorized(request, h);
 }

@@ -4,7 +4,7 @@ const Boom = require('boom');
 module.exports = {
   method: 'GET',
   path: '/api/v1/admin/search',
-  config: {
+  options: {
     auth: { strategy: 'session', mode: 'required' },
     validate: {
       query: Joi.object().keys({
@@ -12,27 +12,24 @@ module.exports = {
         transactionId: Joi.string().optional()
       }).or('email', 'transactionId')
     },
-    pre: [ { method: 'isAuthorized' } ]
+    pre: [ { method: isAuthorized } ]
   },
-  handler: (request, reply) => {
-    let promise;
+  handler: async (request, h) => {
     let email = request.query.email;
     let transId = request.query.transactionId;
 
-    if (email) { promise = searchByEmail(request, email); }
-    else if (transId) { promise = searchByTransactionId(request, transId); }
-    else { promise = Boom.badRequest('Invalid Search Input'); }
-
-    promise.catch((e) => {
-      console.log(e);
-      if (e.isBoom) { return e; }
-      else { return Boom.badImplementation(e.message); }
-    });
-    return reply(promise);
+    try {
+      let results;
+      if (email) { results = await searchByEmail(request, email); }
+      else if (transId) { results = await searchByTransactionId(request, transId); }
+      else { results = Boom.badRequest('Invalid Search Input'); }
+      return results;
+    }
+    catch (err) { return Boom.badImplementation(err); }
   }
 };
 
-function searchByTransactionId(request, transId) {
+async function searchByTransactionId (request, transId) {
   let columns = [
     'charges.id',
     'users.id as user_id',
@@ -45,27 +42,24 @@ function searchByTransactionId(request, transId) {
     'charges.gateway',
     'charges.transaction_id'
   ];
-  return request.db
-  .select(columns)
-  .from('charges')
-  .join('users', 'users.id', 'charges.user_id')
-  .join('subscriptions', 'subscriptions.id', 'charges.subscription_id')
-  .where('charges.transaction_id', transId)
-  .orderBy('charges.created_at')
-  .then((data) => { return { results: data }; })
-  .catch((e) => { return Boom.badImplementation(e); });
+  let results = await request.db.select(columns).from('charges')
+    .join('users', 'users.id', 'charges.user_id')
+    .join('subscriptions', 'subscriptions.id', 'charges.subscription_id')
+    .where('charges.transaction_id', transId)
+    .orderBy('charges.created_at');
+  return { results: results };
 }
 
-function searchByEmail(request, email) {
+async function searchByEmail (request, email) {
   let columns = [
     'users.id as user_id',
     'users.email',
     'users.created_at'
   ];
-  return request.db
-  .select(columns)
-  .from('users')
-  .where('email', email)
-  .then((data) => { return { results: data }; })
-  .catch((e) => { return Boom.badImplementation(e); });
+  let results = await request.db.select(columns).from('users').where('email', email);
+  return { results: results };
+}
+
+async function isAuthorized (request, h) {
+  return request.server.methods.isAuthorized(request, h);
 }

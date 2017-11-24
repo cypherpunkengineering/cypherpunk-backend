@@ -9,13 +9,13 @@ function flatten (item, result) {
 
 module.exports = flatten([
   // admin routes
-  // require('./admin/users/counts/get'),
-  // require('./admin/users/index/get'),
-  // require('./admin/users/get'),
-  // require('./admin/communication/post'),
-  // require('./admin/users/reset/post'),
-  // require('./admin/users/deactivate/post'),
-  // require('./admin/search/get'),
+  require('./admin/users/counts/get'),
+  require('./admin/users/index/get'),
+  require('./admin/users/get'),
+  require('./admin/communication/post'),
+  require('./admin/users/reset/post'),
+  require('./admin/users/deactivate/post'),
+  require('./admin/search/get'),
 
   // v1 route
   require('./v1/account/logout'),

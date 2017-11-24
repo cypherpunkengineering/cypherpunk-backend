@@ -3,12 +3,12 @@ const Boom = require('boom');
 module.exports = {
   method: 'GET',
   path: '/api/v1/admin/users/counts',
-  config: {
+  options: {
     auth: { strategy: 'session', mode: 'required' },
     // auth: false
-    pre: [ { method: 'isAuthorized' } ]
+    pre: [ { method: isAuthorized } ]
   },
-  handler: (request, reply) => {
+  handler: async (request, h) => {
     let promises = [
       trialUsers(request),
       inactiveTrialUsers(request),
@@ -19,11 +19,11 @@ module.exports = {
       activeCancelledUsers(request),
       inactiveUsers(request),
       request.db.select('count').from('user_counters').where({ type: 'registered' }).then(scalar),
-      request.db.select('count').from('user_counters').where({ type: 'confirmed' }).then(scalar),
+      request.db.select('count').from('user_counters').where({ type: 'confirmed' }).then(scalar)
     ];
 
-    let promise = Promise.all(promises)
-    .then((counts) => {
+    try {
+      let counts = await Promise.all(promises);
       return {
         trial: {
           total: counts[0],
@@ -35,91 +35,90 @@ module.exports = {
           total: counts[4],
           active: counts[5],
           cancelled: counts[6],
-          inactive: counts[7],
+          inactive: counts[7]
         },
         total: {
           registered: counts[8],
           confirmed: counts[9]
         }
       };
-    })
-    .catch((e) => { return Boom.badImplementation(e); });
-    return reply(promise);
+    }
+    catch (err) { return Boom.badImplementation(err); }
   }
 };
 
 
-function scalar(data) {
+function scalar (data) {
   if (data.length) { return parseInt(data[0].count); }
   else { return 0; }
 }
 
-function trialUsers(request) {
+function trialUsers (request) {
   return request.db('users')
-  .count('type')
-  .whereIn('type', ['trial', 'pending', 'invitation', 'free'])
-  .where({ deactivated: false })
-  .then(scalar);
+    .count('type')
+    .whereIn('type', ['trial', 'pending', 'invitation', 'free'])
+    .where({ deactivated: false })
+    .then(scalar);
 }
 
-function confirmedTrials(request) {
+function confirmedTrials (request) {
   return request.db('users')
-  .count('type')
-  .whereIn('type', ['trial', 'pending', 'invitation', 'free'])
-  .andWhere('confirmed', true)
-  .then(scalar);
+    .count('type')
+    .whereIn('type', ['trial', 'pending', 'invitation', 'free'])
+    .andWhere('confirmed', true)
+    .then(scalar);
 }
 
-function unconfirmedTrials(request) {
+function unconfirmedTrials (request) {
   return request.db('users')
-  .count('type')
-  .whereIn('type', ['trial', 'pending', 'invitation', 'free'])
-  .andWhere('confirmed', false)
-  .then(scalar);
+    .count('type')
+    .whereIn('type', ['trial', 'pending', 'invitation', 'free'])
+    .andWhere('confirmed', false)
+    .then(scalar);
 }
 
-function premiumUsers(request) {
+function premiumUsers (request) {
   return request.db('users')
-  .count('type')
-  .where('type', 'premium')
-  .then(scalar);
+    .count('type')
+    .where('type', 'premium')
+    .then(scalar);
 }
 
-function activeUsers(request) {
+function activeUsers (request) {
   return request.db('users')
-  .join('subscriptions', 'users.id', 'subscriptions.user_id')
-  .where({ 'users.type': 'premium' })
-  .andWhere('subscriptions.current', '=', true)
-  .andWhere('subscriptions.current_period_end_timestamp', '>', request.db.fn.now())
-  .whereNull('subscriptions.cancellation_timestamp')
-  .whereNull('subscriptions.renewal_timestamp')
-  .count('users.type')
-  .then(scalar);
+    .join('subscriptions', 'users.id', 'subscriptions.user_id')
+    .where({ 'users.type': 'premium' })
+    .andWhere('subscriptions.current', '=', true)
+    .andWhere('subscriptions.current_period_end_timestamp', '>', request.db.fn.now())
+    .whereNull('subscriptions.cancellation_timestamp')
+    .whereNull('subscriptions.renewal_timestamp')
+    .count('users.type')
+    .then(scalar);
 }
 
-function activeCancelledUsers(request) {
+function activeCancelledUsers (request) {
   return request.db('users')
-  .join('subscriptions', 'users.id', 'subscriptions.user_id')
-  .where({ 'users.type': 'premium' })
-  .andWhere('subscriptions.current', '=', true)
-  .andWhere('subscriptions.current_period_end_timestamp', '>', request.db.fn.now())
-  .andWhere(function() {
-    this.whereNotNull('subscriptions.cancellation_timestamp')
-    .orWhereNotNull('subscriptions.renewal_timestamp');
-  })
-  .count('users.type')
-  .then(scalar);
+    .join('subscriptions', 'users.id', 'subscriptions.user_id')
+    .where({ 'users.type': 'premium' })
+    .andWhere('subscriptions.current', '=', true)
+    .andWhere('subscriptions.current_period_end_timestamp', '>', request.db.fn.now())
+    .andWhere(function () {
+      this.whereNotNull('subscriptions.cancellation_timestamp')
+        .orWhereNotNull('subscriptions.renewal_timestamp');
+    })
+    .count('users.type')
+    .then(scalar);
 }
 
-function inactiveTrialUsers(request) {
+function inactiveTrialUsers (request) {
   return request.db('users')
-  .count('type')
-  .whereIn('type', ['trial', 'pending', 'invitation', 'free'])
-  .where({ deactivated: true })
-  .then(scalar);
+    .count('type')
+    .whereIn('type', ['trial', 'pending', 'invitation', 'free'])
+    .where({ deactivated: true })
+    .then(scalar);
 }
 
-function inactiveUsers(request) {
+function inactiveUsers (request) {
   let promises = [];
 
   promises.push(request.db('users')
@@ -140,5 +139,9 @@ function inactiveUsers(request) {
   );
 
   return Promise.all(promises)
-  .then(data => { return data[0] + data[1]; });
+    .then(data => { return data[0] + data[1]; });
+}
+
+async function isAuthorized (request, h) {
+  return request.server.methods.isAuthorized(request, h);
 }

@@ -5,28 +5,27 @@ const randToken = require('rand-token');
 module.exports = {
   method: 'POST',
   path: '/api/v1/admin/users/{id}/reset',
-  config: {
+  options: {
     auth: { strategy: 'session', mode: 'required' },
     validate: { params: { id: Joi.string().required() } },
-    pre: [ { method: 'isAuthorized' } ]
+    pre: [ { method: isAuthorized } ]
   },
-  handler: (request, reply) => {
+  handler: async (request, h) => {
     let userId = request.params.id;
 
-    let promise = request.db('users').update({
-      recovery_token: randToken.generate(32)
-    })
-    .where({ id: userId })
-    .returning(['id', 'email', 'recovery_token'])
-    .then((user) => {
+    try {
+      let user = await request.db('users').update({ recovery_token: randToken.generate(32) })
+        .where({ id: userId }).returning(['id', 'email', 'recovery_token']);
+
       let msg = { to: user.email, id: user.id, recoveryToken: user.recovery_token };
-      return request.mailer.recovery(msg);
-    })
-    .catch((err) => {
-      console.log(err);
-      if (err.isBoom) { return err; }
-      else { return Boom.badImplementation(err.message); }
-    });
-    return reply(promise);
+      await request.mailer.recovery(msg);
+
+      return h.response().code(200);
+    }
+    catch (err) { return Boom.badImplementation(err); }
   }
 };
+
+async function isAuthorized (request, h) {
+  return request.server.methods.isAuthorized(request, h);
+}

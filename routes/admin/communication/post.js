@@ -5,7 +5,7 @@ const crypto = require('crypto');
 module.exports = {
   method: 'POST',
   path: '/api/v1/admin/communication',
-  config: {
+  options: {
     auth: { strategy: 'session', mode: 'required' },
     // auth: false,
     validate: {
@@ -16,10 +16,9 @@ module.exports = {
         regularText: Joi.string().required()
       }
     },
-    pre: [ { method: 'isAuthorized' } ]
+    pre: [ { method: isAuthorized } ]
   },
-  handler: (request, reply) => {
-    let promise;
+  handler: async (request, h) => {
     let group = request.payload.group;
     let email = {
       subject: request.payload.subject,
@@ -29,82 +28,71 @@ module.exports = {
       }
     };
 
-    switch(group) {
+    let handler;
+    switch (group) {
       case 'ed':
-        promise = getEd(request);
+        handler = getEd;
         break;
 
       case 'dev':
-        promise = getDevUsers(request);
+        handler = getDevUsers;
         break;
 
       case 'confirmed':
-        promise = getConfirmedUsers(request);
+        handler = getConfirmedUsers;
         break;
 
       case 'unconfirmed':
-        promise = getUnconfirmedUsers(request);
+        handler = getUnconfirmedUsers;
         break;
 
       case 'all':
-        promise = getAllUsers(request);
+        handler = getAllUsers;
         break;
 
       default:
-        promise = defaultUsers();
+        return Boom.badRequest('Invaild Group Option');
     }
 
-    promise.then((users) => { mailUsers(users, email, request.mailer); })
-    .catch((err) => {
-      console.log(err);
-      if (err.isBoom) { return err; }
-      else { return Boom.badImplementation(err.message); }
-    });
-    return reply(promise);
+    try {
+      let recipients = await handler(request);
+      mailUsers(recipients, email, request.mailer);
+      return h.response().code(200);
+    }
+    catch (err) { return Boom.badImplementation(err); }
   }
 };
 
-function getEd(request) {
-  return request.db.select('email')
-  .from('users')
-  .where({ email: 'ed@cypherpunk.com' });
+async function getEd (request) {
+  await request.db.select('email').from('users').where({ email: 'ed@cypherpunk.com' });
 }
 
-function getDevUsers(request) {
-  return request.db.select('email')
-  .from('users')
-  .whereIn('email', [
-    'mike@cypherpunk.com',
-    'kim@cypherpunk.com',
-    'connie@cypherpunk.com',
-    'tony@cypherpunk.com',
-    'jon@cypherpunk.com',
-    'chris@cypherpunk.com',
-    'ed@cypherpunk.com'
-  ]);
+async function getDevUsers (request) {
+  await request.db.select('email').from('users')
+    .whereIn('email', [
+      'mike@cypherpunk.com',
+      'kim@cypherpunk.com',
+      'connie@cypherpunk.com',
+      'tony@cypherpunk.com',
+      'jon@cypherpunk.com',
+      'chris@cypherpunk.com',
+      'ed@cypherpunk.com'
+    ]);
 }
 
-function getConfirmedUsers(request) {
-  return request.db.select('email')
-  .from('users')
-  .where({ confirmed: true });
+async function getConfirmedUsers (request) {
+  await request.db.select('email').from('users').where({ confirmed: true });
 }
 
-function getUnconfirmedUsers(request) {
-  return request.db.select('email')
-  .from('users')
-  .where({ confirmed: false });
+async function getUnconfirmedUsers (request) {
+  await request.db.select('email').from('users').where({ confirmed: false });
 }
 
-function getAllUsers(request) {
-  return request.db.select('email').from('users');
+async function getAllUsers (request) {
+  await request.db.select('email').from('users');
 }
 
-function defaultUsers() {
-  return Promise.reject(Boom.badRequest('Invaild Group Option'));
-}
-
-function mailUsers(users, email, mailer) {
+function mailUsers (users, email, mailer) {
   let timer = 0;
   users.forEach((user) => {
     // space email out by 100ms
@@ -121,9 +109,13 @@ function mailUsers(users, email, mailer) {
   });
 }
 
-function encrypt(text){
+function encrypt (text) {
   var cipher = crypto.createCipher('aes-256-ctr', 'jsucksballsformakingmedothisshit');
-  var crypted = cipher.update(text,'utf8','hex');
+  var crypted = cipher.update(text, 'utf8', 'hex');
   crypted += cipher.final('hex');
   return crypted;
+}
+
+async function isAuthorized (request, h) {
+  return request.server.methods.isAuthorized(request, h);
 }
