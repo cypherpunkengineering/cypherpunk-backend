@@ -10,7 +10,7 @@ const path = require('path');
 const Hapi = require('hapi');
 // const Good = require('good');
 const Inert = require('inert');
-// const Redis = require('catbox-redis');
+const Redis = require('catbox-redis');
 // const Auth = require('hapi-auth-cookie');
 
 
@@ -52,12 +52,12 @@ const server = global.server = new Hapi.Server({
       origin: ['*'],
       credentials: true
     }
-  }
-  // cache: [{
-  //   engine: Redis,
-  //   host: '127.0.0.1',
-  //   partition: 'cache'
-  // }]
+  },
+  cache: [{
+    engine: Redis,
+    host: '127.0.0.1',
+    partition: 'cache'
+  }]
 });
 
 // transient cookie store
