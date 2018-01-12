@@ -8,7 +8,7 @@ const configs = require('./configs');
 
 const path = require('path');
 const Hapi = require('hapi');
-// const Good = require('good');
+const Good = require('good');
 const Inert = require('inert');
 const Redis = require('catbox-redis');
 // const Auth = require('hapi-auth-cookie');
@@ -19,7 +19,7 @@ const Redis = require('catbox-redis');
 const db = require('./database');
 const routes = require('./routes');
 const authOptions = configs.auth;
-// const logOptions = configs.logging;
+const logOptions = configs.logging;
 
 
 // PLUGINS
@@ -110,7 +110,7 @@ async function bootstrap () {
   await server.register({ plugin: Inert });
 
   // logging
-  // await server.register({ plugin: Good, options: logOptions }); });
+  await server.register({ plugin: Good, options: logOptions });
 
   // session caching (30 days)
   // TODO: double check cache expiresIn - use redis instead to persist session forever
